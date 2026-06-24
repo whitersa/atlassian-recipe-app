@@ -1,0 +1,1706 @@
+/* ==========================================
+   Atlassian Design System Styled CSS for React
+   ========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Colors - Light Theme (Original Clean Palette with Orange/Coral Brand Accent) */
+  --ds-background-default: #FFFFFF;
+  --ds-background-input: #FAFBFC;
+  --ds-background-neutral: #F4F5F7;
+  --ds-background-neutral-hover: #EBECF0;
+  --ds-background-brand: #E65F3C;
+  --ds-background-brand-hover: #CC4D2E;
+  
+  --ds-text: #172B4D;
+  --ds-text-subtle: #5E6C84;
+  --ds-text-brand: #E65F3C;
+  --ds-text-inverse: #FFFFFF;
+
+  --ds-border: #DFE1E6;
+  --ds-border-brand: #E65F3C;
+  --ds-border-focus: #FF886B;
+  
+  /* Elevation Shadows */
+  --ds-shadow-raised: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  --ds-shadow-overlay: 0 8px 16px -4px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  
+  /* Status Badges (Lozenges) */
+  --ds-badge-green-bg: #E3FCEF;
+  --ds-badge-green-txt: #006644;
+  --ds-badge-red-bg: #FFEBE6;
+  --ds-badge-red-txt: #BF2600;
+  --ds-badge-blue-bg: #DEEBFF;
+  --ds-badge-blue-txt: #0747A6;
+  --ds-badge-orange-bg: #FFF0E6;
+  --ds-badge-orange-txt: #E65F3C;
+  --ds-badge-purple-bg: #EAE6FF;
+  --ds-badge-purple-txt: #403294;
+  
+  /* Spacing */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Radius */
+  --radius-sm: 3px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+}
+
+[data-theme="dark"] {
+  /* Colors - Dark Theme (Original Dark Palette with Orange/Coral Brand Accent) */
+  --ds-background-default: #1D2125;
+  --ds-background-input: #22272B;
+  --ds-background-neutral: #2C333A;
+  --ds-background-neutral-hover: #3A444E;
+  --ds-background-brand: #FF8D70;
+  --ds-background-brand-hover: #FFA38C;
+  
+  --ds-text: #DFE1E6;
+  --ds-text-subtle: #9FADBC;
+  --ds-text-brand: #FF8D70;
+  --ds-text-inverse: #1D2125;
+
+  --ds-border: #38424D;
+  --ds-border-brand: #FF8D70;
+  --ds-border-focus: #FFA38C;
+  
+  /* Elevation Shadows */
+  --ds-shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 1px rgba(0, 0, 0, 0.5);
+  --ds-shadow-overlay: 0 8px 16px -4px rgba(0, 0, 0, 0.6), 0 0 1px rgba(0, 0, 0, 0.6);
+  
+  /* Status Badges (Lozenges) */
+  --ds-badge-green-bg: #1C3F2E;
+  --ds-badge-green-txt: #4BCA81;
+  --ds-badge-red-bg: #4C1C13;
+  --ds-badge-red-txt: #FF8F73;
+  --ds-badge-blue-bg: #162E52;
+  --ds-badge-blue-txt: #82B3FF;
+  --ds-badge-orange-bg: #3D271D;
+  --ds-badge-orange-txt: #FFAB73;
+  --ds-badge-purple-bg: #2B2252;
+  --ds-badge-purple-txt: #B2A3FF;
+}
+
+/* Base resets */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #F4F5F7;
+  color: var(--ds-text);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] body {
+  background-color: #091E42;
+}
+
+/* Mobile Layout Containment */
+.mobile-wrapper {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: var(--ds-background-default);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s ease;
+}
+
+/* Header Component */
+header {
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ds-border);
+  position: sticky;
+  top: 0;
+  background-color: var(--ds-background-default);
+  z-index: 10;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--ds-background-brand);
+  fill: currentColor;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ds-text);
+  letter-spacing: -0.5px;
+}
+
+.brand-title span {
+  color: var(--ds-background-brand);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Dark Mode Switcher Toggle */
+.theme-switch {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--ds-text-subtle);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.theme-switch:hover {
+  background-color: var(--ds-background-neutral);
+  color: var(--ds-text);
+}
+
+.theme-switch svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* Profile Avatar */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--ds-border);
+}
+
+/* Search Area */
+.search-container {
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-xs);
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--ds-border);
+  background-color: var(--ds-background-input);
+  color: var(--ds-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--ds-border-focus);
+  background-color: var(--ds-background-default);
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--ds-text-subtle);
+  pointer-events: none;
+}
+
+/* Categories Slider (Horizontal) */
+.categories-container {
+  padding: var(--spacing-xs) 0 var(--spacing-md);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+}
+
+.categories-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.categories-inner {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-md);
+}
+
+.category-chip {
+  padding: 6px 14px;
+  background-color: var(--ds-background-neutral);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-subtle);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-chip:hover {
+  background-color: var(--ds-background-neutral-hover);
+  color: var(--ds-text);
+}
+
+.category-chip.active {
+  background-color: var(--ds-background-brand);
+  color: var(--ds-text-inverse);
+  border-color: var(--ds-background-brand);
+}
+
+/* Recipe Grid / Feed */
+.recipe-feed {
+  padding: 0 var(--spacing-md) var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex-grow: 1;
+}
+
+.feed-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Recipe Card Component */
+.recipe-card {
+  background-color: var(--ds-background-default);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ds-border);
+  box-shadow: var(--ds-shadow-raised);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background-color: var(--ds-background-neutral);
+}
+
+.recipe-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Floating Difficulty Tag */
+.difficulty-badge {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1;
+}
+
+.difficulty-badge.easy {
+  background-color: var(--ds-badge-green-bg);
+  color: var(--ds-badge-green-txt);
+}
+
+.difficulty-badge.medium {
+  background-color: var(--ds-badge-orange-bg);
+  color: var(--ds-badge-orange-txt);
+}
+
+.difficulty-badge.hard {
+  background-color: var(--ds-badge-red-bg);
+  color: var(--ds-badge-red-txt);
+}
+
+.card-info {
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.recipe-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ds-text);
+  line-height: 1.3;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 12px;
+  color: var(--ds-text-subtle);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-item svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xxs);
+  margin-top: 4px;
+}
+
+.lozenge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.lozenge-default {
+  background-color: var(--ds-background-neutral);
+  color: var(--ds-text-subtle);
+}
+
+.lozenge-blue {
+  background-color: var(--ds-badge-blue-bg);
+  color: var(--ds-badge-blue-txt);
+}
+
+.lozenge-green {
+  background-color: var(--ds-badge-green-bg);
+  color: var(--ds-badge-green-txt);
+}
+
+.lozenge-red {
+  background-color: var(--ds-badge-red-bg);
+  color: var(--ds-badge-red-txt);
+}
+
+.lozenge-orange {
+  background-color: var(--ds-badge-orange-bg);
+  color: var(--ds-badge-orange-txt);
+}
+
+/* Empty/Filter State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  color: var(--ds-text-subtle);
+  gap: var(--spacing-sm);
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  color: var(--ds-border);
+}
+
+/* ==========================================
+   Recipe Detail Overlay Modal (Bottom Sheet)
+   ========================================== */
+.recipe-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(9, 30, 66, 0.4); /* Atlassian blanket */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.recipe-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content-container {
+  max-width: 480px;
+  width: 100%;
+  height: 90vh;
+  background-color: var(--ds-background-default);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--ds-shadow-overlay);
+  margin: 0 auto;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.15, 1, 0.3, 1);
+}
+
+.recipe-modal.active .modal-content-container {
+  transform: translateY(0);
+}
+
+/* Modal Close Header */
+.modal-handle-bar {
+  width: 36px;
+  height: 4px;
+  background-color: var(--ds-border);
+  border-radius: 2px;
+  margin: var(--spacing-xs) auto;
+  flex-shrink: 0;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(9, 30, 66, 0.08);
+  color: var(--ds-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 11;
+  transition: background-color 0.2s;
+}
+
+.modal-close-btn:hover {
+  background-color: rgba(9, 30, 66, 0.16);
+}
+
+.modal-body {
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cover section */
+.modal-cover {
+  width: 100%;
+  height: 220px;
+  position: relative;
+  background-color: var(--ds-background-neutral);
+  flex-shrink: 0;
+}
+
+.modal-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-intro {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--ds-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ds-text);
+}
+
+.chef-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.chef-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.chef-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-subtle);
+}
+
+/* Tabs Component */
+.tabs-container {
+  position: relative;
+  display: flex;
+  border-bottom: 2px solid var(--ds-border);
+  background-color: var(--ds-background-default);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--spacing-md);
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ds-text-subtle);
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.tab-btn.active {
+  color: var(--ds-text-brand);
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50%;
+  height: 2px;
+  background-color: var(--ds-border-brand);
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Tab Panels */
+.tab-panel {
+  display: none;
+  padding: var(--spacing-md);
+  flex-grow: 1;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* Tab 1: Ingredients Checklist */
+.ingredients-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.ingredients-count {
+  font-size: 12px;
+  color: var(--ds-text-subtle);
+}
+
+.ingredient-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+/* Custom Checklist Item */
+.ingredient-item {
+  display: flex;
+  align-items: center;
+  padding: 10px var(--spacing-sm);
+  background-color: var(--ds-background-neutral);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.ingredient-item:hover {
+  background-color: var(--ds-background-neutral-hover);
+}
+
+/* Real native checkbox hidden */
+.ingredient-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Custom Checkmark Box */
+.custom-checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--ds-border);
+  border-radius: 3px;
+  margin-right: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.custom-checkmark svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--ds-text-inverse);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.ingredient-checkbox:checked ~ .custom-checkmark {
+  background-color: var(--ds-background-brand);
+  border-color: var(--ds-background-brand);
+}
+
+.ingredient-checkbox:checked ~ .custom-checkmark svg {
+  opacity: 1;
+}
+
+.ingredient-name {
+  flex-grow: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ds-text);
+  transition: text-decoration 0.25s, color 0.25s;
+}
+
+.ingredient-amount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+  transition: color 0.25s;
+}
+
+/* Strikethrough style */
+.ingredient-item.completed {
+  opacity: 0.65;
+}
+
+.ingredient-item.completed .ingredient-name {
+  text-decoration: line-through;
+  color: var(--ds-text-subtle);
+}
+
+.ingredient-item.completed .ingredient-amount {
+  color: var(--ds-text-subtle);
+}
+
+/* Tab 2: Cooking Steps Tracker */
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.step-card {
+  display: flex;
+  gap: var(--spacing-md);
+  position: relative;
+}
+
+.step-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 28px;
+  left: 14px;
+  bottom: -20px;
+  width: 2px;
+  background-color: var(--ds-border);
+  z-index: 1;
+}
+
+.step-number-bubble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--ds-background-neutral);
+  border: 2px solid var(--ds-border);
+  color: var(--ds-text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 2;
+  flex-shrink: 0;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.step-content {
+  flex-grow: 1;
+  padding-bottom: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ds-text);
+  margin-top: 4px;
+}
+
+.step-desc {
+  font-size: 13px;
+  color: var(--ds-text-subtle);
+  line-height: 1.5;
+}
+
+/* Timer component inside step card */
+.step-timer-wrapper {
+  margin-top: var(--spacing-xs);
+  background-color: var(--ds-background-neutral);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  max-width: 260px;
+}
+
+.timer-digits {
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.timer-controls {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.btn-timer {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--ds-background-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ds-text);
+  box-shadow: var(--ds-shadow-raised);
+  transition: background-color 0.2s;
+}
+
+.btn-timer:hover {
+  background-color: var(--ds-background-neutral-hover);
+}
+
+.btn-timer svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+/* Active Step Status */
+.step-card.active .step-number-bubble {
+  background-color: var(--ds-background-brand);
+  border-color: var(--ds-background-brand);
+  color: var(--ds-text-inverse);
+}
+
+.step-card.active .step-title {
+  color: var(--ds-text-brand);
+}
+
+.step-card.completed .step-number-bubble {
+  background-color: var(--ds-badge-green-bg);
+  border-color: var(--ds-badge-green-txt);
+  color: var(--ds-badge-green-txt);
+}
+
+.step-card.completed .step-title {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.step-card.completed .step-desc {
+  opacity: 0.6;
+}
+
+/* Nutrition Footer Card */
+.nutrition-card {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-md);
+  background-color: var(--ds-background-neutral);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ds-border);
+}
+
+.nutrition-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-text);
+  text-transform: uppercase;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.5px;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-xs);
+}
+
+.nutrition-item {
+  text-align: center;
+  background-color: var(--ds-background-default);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+}
+
+.nutrition-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.nutrition-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ds-text-subtle);
+  margin-top: 2px;
+}
+
+/* ==========================================
+   Workplace Mode (Privacy/Office Mode)
+   ========================================== */
+.workplace-mode .recipe-image,
+.workplace-mode .modal-cover-img {
+  display: none !important;
+}
+
+.workplace-mode .card-image-wrapper::before,
+.workplace-mode .modal-cover::before {
+  content: "attachment_preview.png";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ds-text-subtle);
+  font-size: 12px;
+  font-weight: 500;
+  background-color: var(--ds-background-neutral);
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+/* ==========================================
+   Bottom Navigation Bar
+   ========================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: 56px;
+  background-color: var(--ds-background-default);
+  border-top: 1px solid var(--ds-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 90;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--ds-text-subtle);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.bottom-nav-item:hover {
+  color: var(--ds-text);
+}
+
+.bottom-nav-item.active {
+  color: var(--ds-text-brand);
+}
+
+.bottom-nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.bottom-nav-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ==========================================
+   Ingredients Feed & Cards
+   ========================================== */
+.ingredients-feed {
+  padding: 0 var(--spacing-md) calc(var(--spacing-xl) + 60px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+/* Override recipe feed padding bottom to avoid tab bar overlay */
+.recipe-feed {
+  padding-bottom: calc(var(--spacing-xl) + 60px) !important;
+}
+
+.ingredient-page-card {
+  background-color: var(--ds-background-default);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ds-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  box-shadow: var(--ds-shadow-raised);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ingredient-page-card:hover {
+  box-shadow: var(--ds-shadow-overlay);
+}
+
+.ingredient-page-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.ingredient-page-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+  text-align: left;
+}
+
+.ingredient-page-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+
+.ingredient-page-unit {
+  font-size: 12px;
+  color: var(--ds-text-subtle);
+}
+
+.ingredient-page-recipes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.recipe-link-label {
+  color: var(--ds-text-subtle);
+  font-weight: 500;
+}
+
+.recipe-link-btn {
+  background: none;
+  border: none;
+  color: var(--ds-text-brand);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin: 0;
+  transition: color 0.15s ease;
+}
+
+.recipe-link-btn:hover {
+  color: var(--ds-background-brand-hover);
+}
+
+.ingredient-page-card-action {
+  flex-shrink: 0;
+}
+
+.ingredient-page-card-action .lozenge {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ==========================================
+   Materials Portal & Dashboard View
+   ========================================== */
+.portal-container {
+  padding: var(--spacing-md) var(--spacing-md) calc(var(--spacing-xl) + 60px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.portal-stats-card {
+  background-color: var(--ds-background-default);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--ds-shadow-raised);
+}
+
+.portal-stats-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ds-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.portal-stats-grid {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: var(--spacing-md);
+  padding-block: var(--spacing-xs);
+}
+
+.portal-stat-number-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.portal-stat-number-box .number {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.portal-stat-number-box .number.highlight {
+  color: var(--ds-badge-green-txt);
+}
+
+.portal-stat-number-box .number.alert {
+  color: var(--ds-badge-orange-txt);
+}
+
+.portal-stat-number-box .label {
+  font-size: 11px;
+  color: var(--ds-text-subtle);
+  font-weight: 600;
+}
+
+.portal-progress-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.portal-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--ds-text-subtle);
+  font-weight: 600;
+}
+
+.portal-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--ds-background-neutral);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.portal-progress-fill {
+  height: 100%;
+  background-color: var(--ds-background-brand);
+  border-radius: 3px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Portal Entry Cards */
+.portal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.portal-card {
+  background-color: var(--ds-background-default);
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--ds-shadow-raised);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-card:hover {
+  box-shadow: var(--ds-shadow-overlay);
+  border-color: var(--ds-border-brand);
+}
+
+.portal-card-main {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.portal-card-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+}
+
+.portal-card-icon-wrapper.basic {
+  background-color: var(--ds-badge-green-bg);
+  color: var(--ds-badge-green-txt);
+}
+
+.portal-card-icon-wrapper.seasoning {
+  background-color: var(--ds-badge-orange-bg);
+  color: var(--ds-badge-orange-txt);
+}
+
+.portal-card-icon-wrapper.spice {
+  background-color: var(--ds-badge-red-bg);
+  color: var(--ds-badge-red-txt);
+}
+
+.portal-card-icon-wrapper.semi-finished {
+  background-color: var(--ds-badge-blue-bg);
+  color: var(--ds-badge-blue-txt);
+}
+
+.portal-card-icon-wrapper.entry-ing {
+  background-color: var(--ds-badge-blue-bg);
+  color: var(--ds-badge-blue-txt);
+}
+
+.portal-card-icon-wrapper.entry-rec {
+  background-color: var(--ds-badge-purple-bg);
+  color: var(--ds-badge-purple-txt);
+}
+
+.portal-card-icon-wrapper.data-export {
+  background-color: var(--ds-badge-green-bg);
+  color: var(--ds-badge-green-txt);
+}
+
+.portal-card-icon-wrapper.data-import {
+  background-color: var(--ds-badge-blue-bg);
+  color: var(--ds-badge-blue-txt);
+}
+
+.form-message-banner.error {
+  background-color: var(--ds-badge-red-bg);
+  color: var(--ds-badge-red-txt);
+}
+
+.portal-card-info {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.portal-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ds-text);
+  margin-bottom: 2px;
+}
+
+.portal-card-desc {
+  font-size: 11px;
+  color: var(--ds-text-subtle);
+  line-height: 1.4;
+}
+
+.portal-card-chevron {
+  color: var(--ds-text-subtle);
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+
+.portal-card:hover .portal-card-chevron {
+  transform: translateX(3px);
+  color: var(--ds-text-brand);
+}
+
+.portal-card-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--ds-border);
+  font-size: 12px;
+  color: var(--ds-text-subtle);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.portal-card-footer strong {
+  color: var(--ds-text);
+}
+
+.portal-card-footer .text-alert {
+  color: var(--ds-badge-red-txt);
+}
+
+.portal-card-footer .divider {
+  color: var(--ds-border);
+}
+
+/* ==========================================
+   Detailed Sub-view Layout
+   ========================================== */
+.subview-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.subview-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-xs);
+}
+
+.btn-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--ds-background-neutral);
+  color: var(--ds-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.btn-back:hover {
+  background-color: var(--ds-background-neutral-hover);
+}
+
+.subview-title-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.subview-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ds-text);
+  line-height: 1.2;
+}
+
+.subview-subtitle {
+  font-size: 11px;
+  color: var(--ds-text-subtle);
+  font-weight: 500;
+}
+
+.subview-search-wrapper {
+  padding: 0 var(--spacing-md) var(--spacing-xs);
+}
+
+.subview-filters-container {
+  padding: 0 var(--spacing-md) var(--spacing-sm);
+}
+
+.subview-actions-bar {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-md) var(--spacing-sm);
+}
+
+.btn-bulk-action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--ds-border-brand);
+  background-color: var(--ds-background-brand);
+  color: var(--ds-text-inverse);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-bulk-action:hover {
+  background-color: var(--ds-background-brand-hover);
+}
+
+.btn-bulk-action.secondary {
+  background-color: var(--ds-background-default);
+  border-color: var(--ds-border);
+  color: var(--ds-text);
+}
+
+.btn-bulk-action.secondary:hover {
+  background-color: var(--ds-background-neutral);
+}
+
+/* ==========================================
+   Atlassian Standard Interactive States
+   ========================================== */
+
+/* Checklist Item Hover & Checkmark Transitions */
+.ingredient-item {
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.ingredient-item .ingredient-name {
+  transition: color 0.15s ease;
+}
+
+.custom-checkmark {
+  transition: background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.ingredient-item:hover .custom-checkmark {
+  border-color: var(--ds-border-brand);
+}
+
+/* 6. Atlassian Standard Static Tag Styles (Instant Deletion) */
+.home-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--ds-background-brand);
+  color: var(--ds-text-inverse);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--ds-background-brand);
+  cursor: default;
+  box-sizing: border-box;
+}
+
+.home-tag .remove-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ds-text-inverse);
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.home-tag .remove-btn:hover {
+  opacity: 1;
+}
+
+.home-tag .remove-btn:active {
+  transform: scale(0.9);
+}
+
+/* ==========================================
+   Entry Forms Layout & Styles (Tab 2)
+   ========================================== */
+.entry-container {
+  padding: var(--spacing-md) var(--spacing-md) calc(var(--spacing-xl) + 60px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.subtab-container {
+  display: flex;
+  border-bottom: 2px solid var(--ds-border);
+  background-color: var(--ds-background-default);
+  margin-bottom: var(--spacing-xs);
+}
+
+.subtab-btn {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ds-text-subtle);
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: color 0.15s ease;
+  position: relative;
+}
+
+.subtab-btn.active {
+  color: var(--ds-text-brand);
+}
+
+.subtab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--ds-border-brand);
+}
+
+.entry-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: left;
+}
+
+.entry-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.entry-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ds-text);
+}
+
+.entry-form-input, .entry-form-select, .entry-form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--ds-border);
+  background-color: var(--ds-background-input);
+  color: var(--ds-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.entry-form-input:focus, .entry-form-select:focus, .entry-form-textarea:focus {
+  border-color: var(--ds-border-focus);
+  background-color: var(--ds-background-default);
+}
+
+.entry-form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.entry-form-row-group {
+  border: 1px solid var(--ds-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  background-color: var(--ds-background-neutral);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.dynamic-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-row-action {
+  background: none;
+  border: 1px solid var(--ds-border);
+  background-color: var(--ds-background-default);
+  color: var(--ds-text-subtle);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.btn-row-action:hover {
+  background-color: var(--ds-background-neutral-hover);
+  color: var(--ds-text);
+  border-color: var(--ds-text-subtle);
+}
+
+.btn-row-action.delete:hover {
+  background-color: var(--ds-badge-red-bg);
+  color: var(--ds-badge-red-txt);
+  border-color: var(--ds-badge-red-txt);
+}
+
+.form-message-banner {
+  padding: 10px 14px;
+  background-color: var(--ds-badge-green-bg);
+  color: var(--ds-badge-green-txt);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid var(--ds-badge-green-txt);
+}
+
+/* ==========================================
+   Section headings & Action card styling
+   ========================================== */
+.portal-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ds-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  text-align: left;
+}
+
+.portal-action-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.portal-action-row .portal-card.action-card {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px dashed var(--ds-border);
+  background-color: var(--ds-background-default);
+  padding: var(--spacing-md) var(--spacing-sm);
+  box-shadow: none;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-action-row .portal-card.action-card:hover {
+  border-color: var(--ds-border-brand);
+  background-color: var(--ds-background-neutral);
+  box-shadow: var(--ds-shadow-raised);
+}
+
+.action-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  width: 100%;
+}
+
+.action-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ds-text);
+  margin-top: 2px;
+}
+
+.action-card-count {
+  font-size: 11px;
+  color: var(--ds-text-subtle);
+  font-weight: 500;
+}
+
+
+
