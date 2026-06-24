@@ -2,7 +2,7 @@
   "name": "atlassian-recipe-app",
   "private": true,
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=20.0.0"
   },
   "version": "0.0.0",
   "type": "module",
@@ -13,7 +13,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rolldown/binding-win32-x64-msvc": "^1.1.1",
     "idb-keyval": "^6.2.5",
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",
