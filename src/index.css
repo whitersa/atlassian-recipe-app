@@ -1702,5 +1702,64 @@ header {
   font-weight: 500;
 }
 
+.step-ingredient-highlight {
+  display: inline-block;
+  font-weight: 600;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin: 0 2px;
+  font-size: inherit;
+  transition: all 0.15s ease-in-out;
+}
 
+/* 主料 (Main) - Warm Coral/Red Tone */
+.step-ingredient-highlight.type-main {
+  background-color: rgba(224, 62, 45, 0.08);
+  color: #d03e2d;
+  border-bottom: 1.5px solid rgba(224, 62, 45, 0.4);
+}
+[data-theme="dark"] .step-ingredient-highlight.type-main {
+  background-color: rgba(224, 62, 45, 0.2);
+  color: #ff7452;
+  border-bottom-color: rgba(255, 116, 82, 0.6);
+}
+.step-ingredient-highlight.type-main:hover {
+  background-color: rgba(224, 62, 45, 0.15);
+  transform: translateY(-0.5px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 辅料/调料 (Auxiliary/Seasoning) - Cool Green Tone */
+.step-ingredient-highlight.type-aux {
+  background-color: rgba(0, 135, 90, 0.08);
+  color: #00875a;
+  border-bottom: 1.5px solid rgba(0, 135, 90, 0.4);
+}
+[data-theme="dark"] .step-ingredient-highlight.type-aux {
+  background-color: rgba(0, 135, 90, 0.18);
+  color: #36b37e;
+  border-bottom-color: rgba(54, 179, 126, 0.6);
+}
+.step-ingredient-highlight.type-aux:hover {
+  background-color: rgba(0, 135, 90, 0.15);
+  transform: translateY(-0.5px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 香料 (Spice) - Aromatic Purple Tone */
+.step-ingredient-highlight.type-spice {
+  background-color: rgba(101, 84, 192, 0.08);
+  color: #6554c0;
+  border-bottom: 1.5px solid rgba(101, 84, 192, 0.4);
+}
+[data-theme="dark"] .step-ingredient-highlight.type-spice {
+  background-color: rgba(101, 84, 192, 0.18);
+  color: #8777d9;
+  border-bottom-color: rgba(135, 119, 217, 0.6);
+}
+.step-ingredient-highlight.type-spice:hover {
+  background-color: rgba(101, 84, 192, 0.15);
+  transform: translateY(-0.5px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 

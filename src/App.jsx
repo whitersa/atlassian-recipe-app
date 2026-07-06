@@ -93,32 +93,32 @@ const recipes = [
     tags: ['麻辣', '经典川菜', '超下饭'],
     tagClasses: ['lozenge-red', 'lozenge-blue', 'lozenge-default'],
     category: 'lunch',
-    description: '川菜的代表作之一，讲究“麻、辣、烫、香、酥、嫩、鲜、活”。用红油豆瓣酱与大红袍花椒粉，搭配滑嫩的豆腐与焦香的牛肉末，是米饭的完美伴侣。',
+    description: '川菜的代表作之一，讲究“麻、辣、烫、香、酥、嫩、鲜、活”。用红油豆瓣酱与大红袍花椒粉，搭配滑嫩的豆腐与焦香 of 牛肉末，是米饭的完美伴侣。',
     ingredients: [
-      { name: '嫩豆腐 (石膏/南豆腐)', amount: '400 克' },
-      { name: '牛肉末 (或猪肉末)', amount: '80 克' },
-      { name: '郫县豆瓣酱', amount: '1.5 汤匙' },
-      { name: '四川大红袍花椒粉', amount: '1 茶匙' },
-      { name: '青蒜苗', amount: '2 根' },
-      { name: '豆豉', amount: '1 茶匙' },
-      { name: '姜末、蒜末', amount: '各 1 茶匙' },
-      { name: '高汤或清水', amount: '150 毫升' },
-      { name: '水淀粉 (勾芡用)', amount: '适量' }
+      { name: '嫩豆腐 (石膏/南豆腐)', amount: '400 克', type: 'basic' },
+      { name: '牛肉末 (或猪肉末)', amount: '80 克', type: 'basic' },
+      { name: '郫县豆瓣酱', amount: '1.5 汤匙', type: 'seasoning' },
+      { name: '四川大红袍花椒粉', amount: '1 茶匙', type: 'spice' },
+      { name: '青蒜苗', amount: '2 根', type: 'spice' },
+      { name: '豆豉', amount: '1 茶匙', type: 'seasoning' },
+      { name: '姜末、蒜末', amount: '各 1 茶匙', type: 'spice' },
+      { name: '高汤或清水', amount: '150 毫升', type: 'seasoning' },
+      { name: '水淀粉 (勾芡用)', amount: '适量', type: 'seasoning' }
     ],
     steps: [
       {
         title: '豆腐焯水与准备',
-        desc: '将豆腐切成 2 厘米见方的小块。锅中烧开水，加入少许盐，下入豆腐块轻轻焯水 1 分钟，捞出沥干（这样可去除豆腥味，且豆腐不易碎）。蒜苗斜切成段。',
+        desc: '将[主:豆腐]切成 2 厘米见方的小块。锅中烧开水，加入少许[辅:盐]，下入[主:豆腐]块轻轻焯水 1 分钟，捞出沥干（这样可去除豆腥味，且豆腐不易碎）。[香:青蒜苗]斜切成段。',
         duration: 180
       },
       {
         title: '炒制肉末与红油',
-        desc: '热锅凉油，下牛肉末煸炒至水分收干、呈金黄酥香状态后盛出。锅内留底油，小火下郫县豆瓣酱、剁碎的豆豉以及姜蒜末，慢炒出红油与香气。',
+        desc: '热锅凉油，下[主:牛肉末]煸炒至水分收干、呈金黄酥香状态后盛出。锅内留底油，小火下[辅:郫县豆瓣酱]、剁碎的[辅:豆豉]以及[香:姜蒜末]，慢炒出红油与香气。',
         duration: 240
       },
       {
         title: '烧制与三次勾芡',
-        desc: '倒入高汤，加入豆腐和炒好的肉末，大火烧开转小火慢烧 5 分钟入味。分三次倒入水淀粉勾芡（每次间隔半分钟），使酱汁完美包裹豆腐。出锅盛盘，撒上大量花椒粉和青蒜苗。',
+        desc: '倒入[辅:高汤]，加入[主:豆腐]和炒好的[主:牛肉末]，大火烧开转小火慢烧 5 分钟入味。分三次倒入[辅:水淀粉]勾芡（每次间隔半分钟），使酱汁完美包裹豆腐。出锅盛盘，撒上大量[香:花椒粉]和[香:青蒜苗]。',
         duration: 300
       }
     ],
@@ -146,28 +146,28 @@ const recipes = [
     category: 'dinner',
     description: '驰名中外的中餐名菜，红亮油润。鸡丁鲜嫩，花生米酥脆，味道酸甜中带着微辣与淡淡的花椒麻香。',
     ingredients: [
-      { name: '鸡胸肉 (或鸡腿肉)', amount: '250 克' },
-      { name: '熟花生米 (去皮)', amount: '50 克' },
-      { name: '干辣椒段', amount: '10 克' },
-      { name: '花椒粒', amount: '1 茶匙' },
-      { name: '大葱 (切小段)', amount: '1 根' },
-      { name: '姜片、蒜片', amount: '各 5 克' },
-      { name: '宫保调味汁 (糖、醋、生抽、淀粉、水)', amount: '1 小碗' }
+      { name: '鸡胸肉 (或鸡腿肉)', amount: '250 克', type: 'basic' },
+      { name: '熟花生米 (去皮)', amount: '50 克', type: 'basic' },
+      { name: '干辣椒段', amount: '10 克', type: 'spice' },
+      { name: '花椒粒', amount: '1 茶匙', type: 'spice' },
+      { name: '大葱 (切小段)', amount: '1 根', type: 'spice' },
+      { name: '姜片、蒜片', amount: '各 5 克', type: 'spice' },
+      { name: '宫保调味汁 (糖、醋、生抽、淀粉、水)', amount: '1 小碗', type: 'seasoning' }
     ],
     steps: [
       {
         title: '鸡丁切配与腌制',
-        desc: '鸡肉切成 1.5 厘米的丁，加入少许盐、料酒、生抽、水淀粉和一茶匙食用油抓匀，腌制 10-15 分钟锁住水分。调制宫保汁：碗中加入白糖、香醋（糖醋比例约1:1）、生抽、盐、淀粉和少许水搅拌均匀。',
+        desc: '[主:鸡肉]切成 1.5 厘米的丁，加入少许[辅:盐]、料酒、[辅:生抽]、[辅:水淀粉]和一茶匙[辅:食用油]抓匀，腌制 10-15 分钟锁住水分。调制[辅:宫保调味汁]：碗中加入[辅:白糖]、[辅:香醋]（糖醋比例约1:1）、[辅:生抽]、[辅:盐]、[辅:淀粉]和少许水搅拌均匀。',
         duration: 300
       },
       {
         title: '滑炒鸡丁',
-        desc: '锅中倒入稍多的油，烧至五成热时下入腌好的鸡丁，快速滑炒至鸡丁变白八成熟，立即捞出控油待用。',
+        desc: '锅中倒入稍多的油，烧至五成热时下入腌好的[主:鸡丁]，快速滑炒至鸡丁变白八成熟，立即捞出控油待用。',
         duration: 120
       },
       {
         title: '爆香干椒与大火合炒',
-        desc: '锅留底油，下花椒粒、干辣椒段用小火煸炒至辣椒微变褐色。下入姜蒜片、葱段爆香，随后倒入鸡丁。倒入调好的宫保汁，大火快速翻炒至酱汁粘稠包裹鸡肉，最后倒入花生米翻匀即可关火出锅。',
+        desc: '锅留底油，下[香:花椒粒]、[香:干辣椒段]用小火加热至微变褐色。下入[香:姜蒜片]、[香:大葱]爆香，随后倒入[主:鸡丁]。倒入调好的[辅:宫保调味汁]，大火快速翻炒至酱汁粘稠包裹鸡肉，最后倒入[主:熟花生米]翻匀即可关火出锅。',
         duration: 180
       }
     ],
@@ -195,27 +195,27 @@ const recipes = [
     category: 'breakfast',
     description: '每个中国家庭餐桌上最经典、最温馨的快手菜。金黄软嫩的鸡蛋吸饱了番茄的酸甜汤汁，超级下饭。',
     ingredients: [
-      { name: '新鲜鸡蛋', amount: '3 个' },
-      { name: '熟透多汁番茄', amount: '2 个' },
-      { name: '小葱 (切段)', amount: '2 根' },
-      { name: '白糖', amount: '1 茶匙' },
-      { name: '盐', amount: '1/2 茶匙' },
-      { name: '食用油', amount: '适量' }
+      { name: '新鲜鸡蛋', amount: '3 个', type: 'basic' },
+      { name: '熟透多汁番茄', amount: '2 个', type: 'basic' },
+      { name: '小葱 (切段)', amount: '2 根', type: 'spice' },
+      { name: '白糖', amount: '1 茶匙', type: 'seasoning' },
+      { name: '盐', amount: '1/2 茶匙', type: 'seasoning' },
+      { name: '食用油', amount: '适量', type: 'seasoning' }
     ],
     steps: [
       {
         title: '食材准备与打散蛋液',
-        desc: '鸡蛋打入碗中，加 1/4 茶匙盐，用筷子快速顺时针打散至有丰富泡沫。番茄顶端划十字开水烫皮去皮，切成滚刀块。小葱葱白切末，葱绿切段。',
+        desc: '[主:新鲜鸡蛋]打入碗中，加 1/4 茶匙[辅:盐]，用筷子快速顺时针打散至有丰富泡沫。[主:熟透多汁番茄]顶端划十字开水烫皮去皮，切成滚刀块。[香:小葱]葱白切末，葱绿切段。',
         duration: 120
       },
       {
         title: '大火炒制滑蛋',
-        desc: '锅中倒入足量食用油烧至八成热（微微冒烟）。倒入蛋液，蛋液迅速膨胀时用筷子快速划散，待蛋液刚刚凝固还有些湿润时立即盛出，切勿炒老。',
+        desc: '锅中倒入足量[辅:食用油]烧至八成热（微微冒烟）。倒入[主:新鲜鸡蛋]液，蛋液迅速膨胀时用筷子快速划散，待蛋液刚刚凝固还有些湿润时立即盛出，切勿炒老。',
         duration: 90
       },
       {
         title: '炒制番茄与合炒',
-        desc: '锅内留少许底油，下葱白炒香，倒入番茄块中火煸炒，用锅铲轻轻压番茄，炒出丰富的红沙汁。加入糖调味，随后倒入鸡蛋和葱绿段，快速翻匀让鸡蛋吸收番茄汁，最后加剩余的盐调味即可盛盘。',
+        desc: '锅内留少许底油，下小葱炒香，倒入[主:熟透多汁番茄]块中火煸炒，用锅铲轻轻压番茄，炒出丰富的红沙汁。加入[辅:白糖]调味，随后倒入[主:新鲜鸡蛋]和[香:小葱]绿段，快速翻匀让鸡蛋吸收番茄汁，最后加剩余的[辅:盐]调味即可盛盘。',
         duration: 180
       }
     ],
@@ -283,6 +283,41 @@ const hasIngredientAtHome = (recipeIngName, homeIngredients) => {
   return homeIngredients.some(homeIng => {
     const normHome = homeIng.name.toLowerCase();
     return mappedRecipe.includes(normHome) || normHome.includes(mappedRecipe);
+  });
+};
+
+const renderStepText = (text) => {
+  if (!text) return '';
+  const parts = text.split(/\[([^\]]+)\]/);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      let type = 'main'; // default
+      let name = part;
+      
+      if (part.includes(':')) {
+        const separator = ':';
+        const splitIndex = part.indexOf(separator);
+        const prefix = part.substring(0, splitIndex).trim();
+        const mainName = part.substring(splitIndex + 1).trim();
+        
+        if (prefix === '主') {
+          type = 'main';
+          name = mainName;
+        } else if (prefix === '辅') {
+          type = 'aux';
+          name = mainName;
+        } else if (prefix === '香') {
+          type = 'spice';
+          name = mainName;
+        }
+      }
+      return (
+        <span key={index} className={`step-ingredient-highlight type-${type}`}>
+          {name}
+        </span>
+      );
+    }
+    return part;
   });
 };
 
@@ -397,7 +432,7 @@ function App() {
   const [newRecipePrepTime, setNewRecipePrepTime] = useState('');
   const [newRecipeCookTime, setNewRecipeCookTime] = useState('');
   const [newRecipeDifficulty, setNewRecipeDifficulty] = useState('medium');
-  const [newRecipeIngredients, setNewRecipeIngredients] = useState([{ name: '', amount: '' }]);
+  const [newRecipeIngredients, setNewRecipeIngredients] = useState([{ name: '', amount: '', type: 'basic' }]);
   const [newRecipeSteps, setNewRecipeSteps] = useState([{ title: '', desc: '', duration: '' }]);
   const [recipeFormMessage, setRecipeFormMessage] = useState('');
 
@@ -538,7 +573,11 @@ function App() {
     // Filter out empty ingredients and steps
     const validIngredients = newRecipeIngredients
       .filter(ing => ing.name.trim() !== '')
-      .map(ing => ({ name: ing.name.trim(), amount: ing.amount.trim() || '适量' }));
+      .map(ing => ({ 
+        name: ing.name.trim(), 
+        amount: ing.amount.trim() || '适量',
+        type: ing.type || 'basic'
+      }));
 
     const validSteps = newRecipeSteps
       .filter(step => step.desc.trim() !== '')
@@ -592,11 +631,34 @@ function App() {
     setNewRecipePrepTime('');
     setNewRecipeCookTime('');
     setNewRecipeDifficulty('medium');
-    setNewRecipeIngredients([{ name: '', amount: '' }]);
+    setNewRecipeIngredients([{ name: '', amount: '', type: 'basic' }]);
     setNewRecipeSteps([{ title: '', desc: '', duration: '' }]);
     
     setRecipeFormMessage(`成功录入菜谱 “${newRecipe.title}”`);
     setTimeout(() => setRecipeFormMessage(''), 3000);
+  };
+
+  const insertTagIntoStep = (stepIdx, tagName, tagType) => {
+    const textarea = document.getElementById(`step-textarea-${stepIdx}`);
+    if (!textarea) return;
+    
+    const text = textarea.value;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    
+    const prefix = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
+    const tagToInsert = `[${prefix}:${tagName}]`;
+    
+    const newText = text.substring(0, start) + tagToInsert + text.substring(end);
+    
+    const updated = [...newRecipeSteps];
+    updated[stepIdx].desc = newText;
+    setNewRecipeSteps(updated);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + tagToInsert.length, start + tagToInsert.length);
+    }, 50);
   };
 
   // Library modal open state
@@ -856,8 +918,8 @@ function App() {
   // Filtered recipes list
   const filteredRecipes = recipesList.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          recipe.englishTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          recipe.chef.toLowerCase().includes(searchQuery.toLowerCase());
+                          (recipe.englishTitle && recipe.englishTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          (recipe.chef && recipe.chef.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = activeCategory === 'all' || recipe.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
@@ -1408,7 +1470,21 @@ function App() {
                         <label className="entry-form-label">所需材料清单</label>
                         <div className="entry-form-row-group">
                           {newRecipeIngredients.map((ing, idx) => (
-                            <div key={idx} className="dynamic-row">
+                             <div key={idx} className="dynamic-row">
+                              <select
+                                className="entry-form-select"
+                                style={{ flex: 0.8, minWidth: '55px', height: '34px', padding: '0 4px', fontSize: '12px' }}
+                                value={ing.type || 'basic'}
+                                onChange={(e) => {
+                                  const updated = [...newRecipeIngredients];
+                                  updated[idx].type = e.target.value;
+                                  setNewRecipeIngredients(updated);
+                                }}
+                              >
+                                <option value="basic">主料</option>
+                                <option value="seasoning">辅料</option>
+                                <option value="spice">香料</option>
+                              </select>
                               <input 
                                 type="text" 
                                 className="entry-form-input"
@@ -1449,7 +1525,7 @@ function App() {
                           <button 
                             type="button" 
                             className="recipe-link-btn" 
-                            onClick={() => setNewRecipeIngredients([...newRecipeIngredients, { name: '', amount: '' }])}
+                            onClick={() => setNewRecipeIngredients([...newRecipeIngredients, { name: '', amount: '', type: 'basic' }])}
                             style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
                           >
                             <Plus size={12} strokeWidth={3} /> 添加一行材料
@@ -1500,9 +1576,36 @@ function App() {
                               </button>
                             )}
                           </div>
+                          {/* Quick Insert Pills */}
+                          {newRecipeIngredients.filter(ing => ing.name.trim() !== '').length > 0 && (
+                            <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '4px 0 6px 0' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
+                              {newRecipeIngredients
+                                .filter(ing => ing.name.trim() !== '')
+                                .map((ing, i) => {
+                                  const tagType = ing.type || 'basic';
+                                  const labelColor = tagType === 'basic' ? '#d03e2d' : tagType === 'seasoning' ? '#00875a' : '#6554c0';
+                                  const bgColor = tagType === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tagType === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
+                                  const typeLabel = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
+                                  return (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => insertTagIntoStep(idx, ing.name.trim(), tagType)}
+                                      className="category-chip"
+                                      style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
+                                    >
+                                      <span style={{ fontWeight: '700', color: labelColor }}>{typeLabel}</span>
+                                      <span>{ing.name}</span>
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          )}
                           <textarea 
+                            id={`step-textarea-${idx}`}
                             className="entry-form-textarea"
-                            placeholder="描述具体的烹饪操作步骤..."
+                            placeholder="描述具体步骤，可用[材料名]来标记高亮（例如：放入[豆腐]翻炒）"
                             value={step.desc}
                             onChange={(e) => {
                               const updated = [...newRecipeSteps];
@@ -1658,11 +1761,11 @@ function App() {
               {/* Meta Intro */}
               <div className="modal-intro">
                 <h2 className="modal-title">{selectedRecipe.title}</h2>
-                <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', marginTop: '-4px' }}>{selectedRecipe.englishTitle}</div>
-                <div className="chef-row">
-                  <img className="chef-avatar" src={selectedRecipe.avatar} alt="Chef" />
-                  <span className="chef-name">{selectedRecipe.chef}</span>
-                </div>
+                {selectedRecipe.englishTitle && (
+                  <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', marginTop: '-4px', marginBottom: '4px' }}>
+                    {selectedRecipe.englishTitle}
+                  </div>
+                )}
                 <div className="card-meta" style={{ marginTop: 'var(--spacing-xs)' }}>
                   <div className="meta-item">
                     <Clock size={14} strokeWidth={2.5} />
@@ -1719,7 +1822,25 @@ function App() {
                       <span className="custom-checkmark">
                         <svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6" /></svg>
                       </span>
-                      <span className="ingredient-name">{ing.name}</span>
+                      <span className="ingredient-name">
+                        {ing.type && (
+                          <span 
+                            className="lozenge" 
+                            style={{ 
+                              marginRight: '6px', 
+                              padding: '1px 4px', 
+                              fontSize: '10px',
+                              transform: 'scale(0.9)',
+                              backgroundColor: ing.type === 'basic' ? 'rgba(224, 62, 45, 0.08)' : ing.type === 'seasoning' ? 'rgba(0, 135, 90, 0.08)' : 'rgba(101, 84, 192, 0.08)',
+                              color: ing.type === 'basic' ? '#d03e2d' : ing.type === 'seasoning' ? '#00875a' : '#6554c0',
+                              border: ing.type === 'basic' ? '1px solid rgba(224, 62, 45, 0.2)' : ing.type === 'seasoning' ? '1px solid rgba(0, 135, 90, 0.2)' : '1px solid rgba(101, 84, 192, 0.2)'
+                            }}
+                          >
+                            {ing.type === 'basic' ? '主' : ing.type === 'seasoning' ? '辅' : '香'}
+                          </span>
+                        )}
+                        {ing.name}
+                      </span>
                       <span className="ingredient-amount">{ing.amount}</span>
                     </label>
                   ))}
@@ -1745,7 +1866,9 @@ function App() {
                         <div className="step-number-bubble">{idx + 1}</div>
                         <div className="step-content">
                           <div className="step-title">{step.title}</div>
-                          <div className="step-desc">{step.desc}</div>
+                          <div className="step-desc">
+                            {renderStepText(step.desc)}
+                          </div>
                           {hasTimer && (
                             <div className="step-timer-wrapper" onClick={(e) => e.stopPropagation()}>
                               <span className="timer-digits">{formatTime(secondsDisplay)}</span>
