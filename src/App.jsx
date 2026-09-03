@@ -90,8 +90,8 @@ const recipes = [
     prepTime: 10,
     cookTime: 12,
     calories: 350,
-    tags: ['麻辣', '经典川菜', '超下饭'],
-    tagClasses: ['lozenge-red', 'lozenge-blue', 'lozenge-default'],
+    tags: ['麻辣', '豆腐'],
+    tagClasses: ['lozenge-red', 'lozenge-default'],
     category: 'lunch',
     description: '川菜的代表作之一，讲究“麻、辣、烫、香、酥、嫩、鲜、活”。用红油豆瓣酱与大红袍花椒粉，搭配滑嫩的豆腐与焦香 of 牛肉末，是米饭的完美伴侣。',
     ingredients: [
@@ -141,8 +141,8 @@ const recipes = [
     prepTime: 15,
     cookTime: 8,
     calories: 450,
-    tags: ['酸甜微辣', '国宴经典', '鸡肉'],
-    tagClasses: ['lozenge-orange', 'lozenge-blue', 'lozenge-default'],
+    tags: ['酸甜微辣', '鸡肉'],
+    tagClasses: ['lozenge-orange', 'lozenge-default'],
     category: 'dinner',
     description: '驰名中外的中餐名菜，红亮油润。鸡丁鲜嫩，花生米酥脆，味道酸甜中带着微辣与淡淡的花椒麻香。',
     ingredients: [
@@ -190,8 +190,8 @@ const recipes = [
     prepTime: 5,
     cookTime: 6,
     calories: 220,
-    tags: ['酸甜可口', '新手必备', '快手菜'],
-    tagClasses: ['lozenge-green', 'lozenge-blue', 'lozenge-default'],
+    tags: ['酸甜', '鸡蛋'],
+    tagClasses: ['lozenge-green', 'lozenge-default'],
     category: 'breakfast',
     description: '每个中国家庭餐桌上最经典、最温馨的快手菜。金黄软嫩的鸡蛋吸饱了番茄的酸甜汤汁，超级下饭。',
     ingredients: [
@@ -396,7 +396,20 @@ function App() {
         setTheme(data.theme);
         setWorkplaceMode(data.workplaceMode);
         setHomeIngredients(data.homeIngredients);
-        setRecipesList(data.recipes);
+        // Sanitize legacy recipe tags to keep them practical and grounded
+        const sanitizedRecipes = (data.recipes || []).map(recipe => {
+          if (recipe.id === '1' && recipe.tags && recipe.tags.includes('经典川菜')) {
+            return { ...recipe, tags: ['麻辣', '豆腐'], tagClasses: ['lozenge-red', 'lozenge-default'] };
+          }
+          if (recipe.id === '2' && recipe.tags && recipe.tags.includes('国宴经典')) {
+            return { ...recipe, tags: ['酸甜微辣', '鸡肉'], tagClasses: ['lozenge-orange', 'lozenge-default'] };
+          }
+          if (recipe.id === '3' && recipe.tags && recipe.tags.includes('新手必备')) {
+            return { ...recipe, tags: ['酸甜', '鸡蛋'], tagClasses: ['lozenge-green', 'lozenge-default'] };
+          }
+          return recipe;
+        });
+        setRecipesList(sanitizedRecipes);
         setIngredientLibraryList(data.ingredientLibrary);
       } catch (err) {
         console.error('Failed to load data from IndexedDB:', err);
@@ -597,6 +610,11 @@ function App() {
       return;
     }
 
+    const firstBasicIng = validIngredients.find(i => i.type === 'basic')?.name;
+    const cleanBasicName = firstBasicIng ? firstBasicIng.replace(/\s*\(.*?\)/g, '').trim() : '';
+    const customTags = [newRecipeDifficulty === 'easy' ? '快手' : '家常'];
+    if (cleanBasicName) customTags.push(cleanBasicName);
+
     const newRecipe = {
       id: String(Date.now()),
       title: newRecipeTitle.trim(),
@@ -609,7 +627,7 @@ function App() {
       prepTime: parseInt(newRecipePrepTime) || 5,
       cookTime: parseInt(newRecipeCookTime) || 5,
       calories: 300,
-      tags: [newRecipeDifficulty === 'easy' ? '简易' : '需要技巧', '自录入'],
+      tags: customTags,
       tagClasses: ['lozenge-blue', 'lozenge-default'],
       category: newRecipeCategory,
       description: newRecipeDesc.trim() || '自录入的美味食谱。',
@@ -1331,7 +1349,7 @@ function App() {
 
               {/* Form 1: Enter Ingredient */}
               {selectedMaterialType === 'entry-ingredient' && (
-                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px)' }}>
+                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
                   {/* Back Header */}
                   <div className="subview-header">
                     <button className="btn-back" onClick={() => setSelectedMaterialType(null)} title="返回入口">
@@ -1380,7 +1398,7 @@ function App() {
 
               {/* Form 2: Enter Recipe */}
               {selectedMaterialType === 'entry-recipe' && (
-                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px)' }}>
+                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
                   {/* Back Header */}
                   <div className="subview-header">
                     <button className="btn-back" onClick={() => setSelectedMaterialType(null)} title="返回入口">
@@ -1641,7 +1659,7 @@ function App() {
 
       {currentTab === 'prep' && (
         /* 现有食材 list view */
-        <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px)' }}>
+        <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Header */}
           <div className="subview-header" style={{ paddingLeft: 'var(--spacing-md)' }}>
             <div className="subview-title-group">
