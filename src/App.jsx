@@ -458,7 +458,7 @@ function App() {
     const exportPayload = {
       version: DATA_VERSION,
       exportedAt: new Date().toISOString(),
-      appName: '个人菜谱库',
+      appName: '日常菜谱',
       data: {
         theme,
         workplaceMode,
@@ -976,7 +976,7 @@ function App() {
       <header>
         <div className="brand-section">
           <ChefHat className="logo-icon" size={24} strokeWidth={2.5} />
-          <h1 className="brand-title">个人菜谱库</h1>
+          <h1 className="brand-title">日常菜谱</h1>
         </div>
         <div className="header-actions">
           <button onClick={toggleWorkplaceMode} className="theme-switch" aria-label="切换媒体预览" title={workplaceMode ? "显示媒体预览" : "隐藏媒体预览"}>

@@ -1,7 +1,7 @@
 {
-  "name": "Atlas Cooking - 极客厨房",
-  "short_name": "极客厨房",
-  "description": "极简、高效、专为厨房场景打造的个人离线菜谱与物料管理系统",
+  "name": "日常菜谱",
+  "short_name": "日常菜谱",
+  "description": "记录与打理属于自己的每一餐",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#FFFFFF",
