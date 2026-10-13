@@ -3,10 +3,8 @@ import {
   loadAllData,
   saveTheme,
   saveWorkplaceMode,
-  saveHomeIngredients,
   saveRecipes,
   saveIngredientLibrary,
-
 } from './storage';
 import { 
   ChefHat, 
@@ -26,10 +24,8 @@ import {
   ArrowLeft,
   Carrot,
   Sparkles,
-  CookingPot,
   ChevronRight,
   Plus,
-  Check,
   BookOpen,
   Leaf,
   Download,
@@ -262,29 +258,6 @@ const INGREDIENT_LIBRARY = [
   { name: '丁香', category: 'spice' }
 ];
 
-const hasIngredientAtHome = (recipeIngName, homeIngredients) => {
-  const normRecipe = recipeIngName.toLowerCase();
-  
-  // Custom mapping for complex recipe terms
-  let mappedRecipe = normRecipe;
-  if (normRecipe.includes('番茄')) {
-    mappedRecipe += ' 西红柿';
-  }
-  if (normRecipe.includes('姜') || normRecipe.includes('姜末') || normRecipe.includes('姜片')) {
-    mappedRecipe += ' 生姜';
-  }
-  if (normRecipe.includes('蒜') || normRecipe.includes('蒜末') || normRecipe.includes('蒜片')) {
-    mappedRecipe += ' 大蒜';
-  }
-  if (normRecipe.includes('水淀粉') || normRecipe.includes('淀粉')) {
-    mappedRecipe += ' 淀粉';
-  }
-  
-  return homeIngredients.some(homeIng => {
-    const normHome = homeIng.name.toLowerCase();
-    return mappedRecipe.includes(normHome) || normHome.includes(mappedRecipe);
-  });
-};
 
 const renderStepText = (text) => {
   if (!text) return '';
@@ -323,38 +296,31 @@ const renderStepText = (text) => {
 
 const initialIngredients = [
   // 基础食材 (basic)
-  { id: '1', name: '嫩豆腐 (石膏/南豆腐)', category: 'vegetable', type: 'basic', unit: '400 克', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '2', name: '牛肉末 (新鲜)', category: 'meat', type: 'basic', unit: '80 克', status: 'need', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '3', name: '鸡肉块 (去骨)', category: 'meat', type: 'basic', unit: '250 克', status: 'stock', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '4', name: '熟花生米 (去皮)', category: 'condiment', type: 'basic', unit: '50 克', status: 'stock', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '5', name: '熟透番茄 (多汁)', category: 'vegetable', type: 'basic', unit: '2 个', status: 'need', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
-  { id: '6', name: '新鲜鸡蛋', category: 'meat', type: 'basic', unit: '3 个', status: 'stock', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
-  { id: '11', name: '青蒜苗', category: 'vegetable', type: 'basic', unit: '2 根', status: 'need', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '14', name: '葱段 (大葱)', category: 'vegetable', type: 'basic', unit: '1 根', status: 'stock', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '15', name: '切段小葱', category: 'vegetable', type: 'basic', unit: '2 根', status: 'stock', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
+  { id: '1', name: '嫩豆腐 (石膏/南豆腐)', category: 'vegetable', type: 'basic', unit: '400 克', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '2', name: '牛肉末 (新鲜)', category: 'meat', type: 'basic', unit: '80 克', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '3', name: '鸡肉块 (去骨)', category: 'meat', type: 'basic', unit: '250 克', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '4', name: '熟花生米 (去皮)', category: 'condiment', type: 'basic', unit: '50 克', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '5', name: '熟透番茄 (多汁)', category: 'vegetable', type: 'basic', unit: '2 个', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
+  { id: '6', name: '新鲜鸡蛋', category: 'meat', type: 'basic', unit: '3 个', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
+  { id: '11', name: '青蒜苗', category: 'vegetable', type: 'basic', unit: '2 根', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '14', name: '葱段 (大葱)', category: 'vegetable', type: 'basic', unit: '1 根', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '15', name: '切段小葱', category: 'vegetable', type: 'basic', unit: '2 根', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
 
   // 调味酱料 (seasoning)
-  { id: '7', name: '郫县豆瓣酱', category: 'condiment', type: 'seasoning', unit: '1.5 汤匙', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '8', name: '大红袍花椒粉', category: 'condiment', type: 'spice', unit: '1 茶匙', status: 'stock', recipeIds: ['1', '2'], recipeNames: ['川味经典麻婆豆腐', '经典宫保鸡丁'] },
-  { id: '9', name: '新鲜姜末蒜末', category: 'condiment', type: 'spice', unit: '各 1 茶匙', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '10', name: '豆豉 (剁碎)', category: 'condiment', type: 'seasoning', unit: '1 茶匙', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '12', name: '干辣椒段', category: 'condiment', type: 'spice', unit: '10 克', status: 'stock', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '13', name: '花椒粒', category: 'condiment', type: 'spice', unit: '1 茶匙', status: 'stock', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '16', name: '白糖', category: 'condiment', type: 'seasoning', unit: '1 茶匙', status: 'stock', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
-  { id: '17', name: '食用油', category: 'condiment', type: 'seasoning', unit: '适量', status: 'stock', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
-  { id: '18', name: '高汤或清水', category: 'condiment', type: 'seasoning', unit: '150 毫升', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
-  { id: '20', name: '宫保调味汁', category: 'condiment', type: 'seasoning', unit: '1 小碗', status: 'need', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
-  { id: '21', name: '水淀粉 (勾芡用)', category: 'condiment', type: 'seasoning', unit: '适量', status: 'stock', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] }
+  { id: '7', name: '郫县豆瓣酱', category: 'condiment', type: 'seasoning', unit: '1.5 汤匙', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '8', name: '大红袍花椒粉', category: 'condiment', type: 'spice', unit: '1 茶匙', recipeIds: ['1', '2'], recipeNames: ['川味经典麻婆豆腐', '经典宫保鸡丁'] },
+  { id: '9', name: '新鲜姜末蒜末', category: 'condiment', type: 'spice', unit: '各 1 茶匙', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '10', name: '豆豉 (剁碎)', category: 'condiment', type: 'seasoning', unit: '1 茶匙', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '12', name: '干辣椒段', category: 'condiment', type: 'spice', unit: '10 克', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '13', name: '花椒粒', category: 'condiment', type: 'spice', unit: '1 茶匙', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '16', name: '白糖', category: 'condiment', type: 'seasoning', unit: '1 茶匙', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
+  { id: '17', name: '食用油', category: 'condiment', type: 'seasoning', unit: '适量', recipeIds: ['3'], recipeNames: ['家常番茄炒蛋'] },
+  { id: '18', name: '高汤或清水', category: 'condiment', type: 'seasoning', unit: '150 毫升', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] },
+  { id: '20', name: '宫保调味汁', category: 'condiment', type: 'seasoning', unit: '1 小碗', recipeIds: ['2'], recipeNames: ['经典宫保鸡丁'] },
+  { id: '21', name: '水淀粉 (勾芡用)', category: 'condiment', type: 'seasoning', unit: '适量', recipeIds: ['1'], recipeNames: ['川味经典麻婆豆腐'] }
 ];
 
-// Default data for first-time users
-const DEFAULT_HOME_INGREDIENTS = [
-  { name: '鸡蛋', category: 'basic' },
-  { name: '西红柿', category: 'basic' },
-  { name: '小葱', category: 'basic' },
-  { name: '食用油', category: 'seasoning' },
-  { name: '盐', category: 'seasoning' }
-];
+const generateRecipeId = () => String(Date.now());
 
 function App() {
   // Loading state for async IndexedDB initialization
@@ -369,11 +335,14 @@ function App() {
   // Tab navigation state ('recipes' or 'ingredients')
   const [currentTab, setCurrentTab] = useState('recipes');
 
+  // Entry form modal visibility
+  const [showRecipeForm, setShowRecipeForm] = useState(false);
+  const [showRecipeFormActive, setShowRecipeFormActive] = useState(false);
+  const [showIngredientForm, setShowIngredientForm] = useState(false);
+  const [showIngredientFormActive, setShowIngredientFormActive] = useState(false);
+
   // Selected material type for sub-views ('basic', 'seasoning', 'semi-finished', or null)
   const [selectedMaterialType, setSelectedMaterialType] = useState(null);
-
-  // Home ingredients list state
-  const [homeIngredients, setHomeIngredients] = useState(DEFAULT_HOME_INGREDIENTS);
 
   // Recipes list state (customizable)
   const [recipesList, setRecipesList] = useState(recipes);
@@ -388,14 +357,12 @@ function App() {
         const data = await loadAllData({
           theme: 'light',
           workplaceMode: true,
-          homeIngredients: DEFAULT_HOME_INGREDIENTS,
           recipes,
           ingredientLibrary: INGREDIENT_LIBRARY,
         });
 
         setTheme(data.theme);
         setWorkplaceMode(data.workplaceMode);
-        setHomeIngredients(data.homeIngredients);
         // Sanitize legacy recipe tags to keep them practical and grounded
         const sanitizedRecipes = (data.recipes || []).map(recipe => {
           if (recipe.id === '1' && recipe.tags && recipe.tags.includes('经典川菜')) {
@@ -419,11 +386,6 @@ function App() {
     };
     init();
   }, []);
-
-  // Persist changes to IndexedDB (skip during initial loading)
-  useEffect(() => {
-    if (!isLoading) saveHomeIngredients(homeIngredients);
-  }, [homeIngredients, isLoading]);
 
   useEffect(() => {
     if (!isLoading) saveRecipes(recipesList);
@@ -462,7 +424,6 @@ function App() {
       data: {
         theme,
         workplaceMode,
-        homeIngredients,
         recipes: recipesList,
         ingredientLibrary: ingredientLibraryList,
       }
@@ -517,8 +478,6 @@ function App() {
         setWorkplaceMode(restored.workplaceMode);
         saveWorkplaceMode(restored.workplaceMode);
         
-        setHomeIngredients(restored.homeIngredients);
-        
         // Merge: keep built-in recipes, add imported ones
         if (restored.recipes.length > 0) {
           setRecipesList(restored.recipes);
@@ -571,8 +530,8 @@ function App() {
     };
 
     setIngredientLibraryList(prev => [...prev, newItem]);
-    setNewIngName('');
-    setIngFormMessage(`成功录入食材 “${newItem.name}”`);
+    resetIngredientForm();
+    setIngFormMessage(`✓ 食材「${newItem.name}」已保存`);
     setTimeout(() => setIngFormMessage(''), 3000);
   };
 
@@ -616,7 +575,7 @@ function App() {
     if (cleanBasicName) customTags.push(cleanBasicName);
 
     const newRecipe = {
-      id: String(Date.now()),
+      id: generateRecipeId(),
       title: newRecipeTitle.trim(),
       englishTitle: '',
       chef: '自定义录入',
@@ -643,7 +602,13 @@ function App() {
 
     setRecipesList(prev => [newRecipe, ...prev]);
     
-    // Clear form
+    // Clear form and close modal
+    resetRecipeForm();
+    setRecipeFormMessage(`✓ 菜谱「${newRecipe.title}」已保存`);
+    setTimeout(() => setRecipeFormMessage(''), 3000);
+  };
+
+  const resetRecipeForm = () => {
     setNewRecipeTitle('');
     setNewRecipeDesc('');
     setNewRecipePrepTime('');
@@ -651,9 +616,27 @@ function App() {
     setNewRecipeDifficulty('medium');
     setNewRecipeIngredients([{ name: '', amount: '', type: 'basic' }]);
     setNewRecipeSteps([{ title: '', desc: '', duration: '' }]);
-    
-    setRecipeFormMessage(`成功录入菜谱 “${newRecipe.title}”`);
-    setTimeout(() => setRecipeFormMessage(''), 3000);
+    setRecipeFormMessage('');
+    setShowRecipeFormActive(false);
+    setTimeout(() => setShowRecipeForm(false), 300);
+  };
+
+  const openRecipeForm = () => {
+    setShowRecipeForm(true);
+    setTimeout(() => setShowRecipeFormActive(true), 30);
+  };
+
+  const resetIngredientForm = () => {
+    setNewIngName('');
+    setNewIngCategory('basic');
+    setIngFormMessage('');
+    setShowIngredientFormActive(false);
+    setTimeout(() => setShowIngredientForm(false), 300);
+  };
+
+  const openIngredientForm = () => {
+    setShowIngredientForm(true);
+    setTimeout(() => setShowIngredientFormActive(true), 30);
   };
 
   const insertTagIntoStep = (stepIdx, tagName, tagType) => {
@@ -679,62 +662,17 @@ function App() {
     }, 50);
   };
 
-  // Library modal open state
-  const [isLibraryModalOpen, setIsLibraryModalOpen] = useState(false);
-
-  // Selected category in ingredient library modal ('basic' or 'seasoning')
-  const [libraryActiveCategory, setLibraryActiveCategory] = useState('basic');
-
-  // Library search state
-  const [libSearchQuery, setLibSearchQuery] = useState('');
-
-  const closeLibraryModal = () => {
-    setIsLibraryModalOpen(false);
-    setLibSearchQuery('');
-  };
-
-  const handleRemoveHomeIngredient = (name) => {
-    setHomeIngredients(prev => prev.filter(n => n.name !== name));
-  };
-
-  // Derived ingredients list from static initialIngredients and dynamic homeIngredients
-  const ingredients = initialIngredients.map(item => ({
-    ...item,
-    status: hasIngredientAtHome(item.name, homeIngredients) ? 'stock' : 'need'
-  }));
-
-  const toggleIngredientStatus = (id) => {
-    const item = initialIngredients.find(ing => ing.id === id);
-    if (!item) return;
-    
-    // Find matching library item
-    const matchedLib = ingredientLibraryList.find(libItem => 
-      item.name.toLowerCase().includes(libItem.name.toLowerCase()) || 
-      libItem.name.toLowerCase().includes(item.name.toLowerCase())
-    );
-    const nameToToggle = matchedLib ? matchedLib.name : item.name.replace(/\(.*?\)/g, '').trim();
-    const categoryToToggle = matchedLib ? matchedLib.category : item.type;
-
-    setHomeIngredients(prev => {
-      const exists = prev.some(n => n.name === nameToToggle);
-      if (exists) {
-        return prev.filter(n => n.name !== nameToToggle);
-      } else {
-        return [...prev, { name: nameToToggle, category: categoryToToggle }];
-      }
-    });
-  };
+  // Static ingredient items
+  const ingredients = initialIngredients;
 
   const handleTabChange = (tab) => {
     setCurrentTab(tab);
-    setActiveCategory('all');
     setSearchQuery('');
     setSelectedMaterialType(null); // Reset sub-view state
   };
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
 
   // Modal active states
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -864,16 +802,7 @@ function App() {
   const handleOpenRecipe = (recipe) => {
     setSelectedRecipe(recipe);
     setActiveTab(0);
-    
-    // Auto-check ingredients that are already at home
-    const initialChecked = {};
-    recipe.ingredients.forEach((ing, idx) => {
-      if (hasIngredientAtHome(ing.name, homeIngredients)) {
-        initialChecked[idx] = true;
-      }
-    });
-    setIngredientChecked(initialChecked);
-    
+    setIngredientChecked({});
     setActiveStepIndex(0);
     setCompletedSteps([]);
     resetTimerState();
@@ -938,15 +867,11 @@ function App() {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (recipe.englishTitle && recipe.englishTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
                           (recipe.chef && recipe.chef.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = activeCategory === 'all' || recipe.category === activeCategory;
-    return matchesSearch && matchesCategory;
+    return matchesSearch;
   });
 
-  const getStats = (type) => {
-    const items = ingredients.filter(item => item.type === type);
-    const inStock = items.filter(item => item.status === 'stock').length;
-    const total = items.length;
-    return { inStock, total, need: total - inStock };
+  const getIngredientCount = (type) => {
+    return ingredients.filter(item => item.type === type).length;
   };
 
   // Filtered ingredients list for selected sub-view
@@ -954,9 +879,7 @@ function App() {
     if (selectedMaterialType && item.type !== selectedMaterialType) return false;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.recipeNames.some(name => name.toLowerCase().includes(searchQuery.toLowerCase()));
-    if (!matchesSearch) return false;
-    if (activeCategory !== 'all' && item.status !== activeCategory) return false;
-    return true;
+    return matchesSearch;
   });
 
   if (isLoading) {
@@ -988,45 +911,20 @@ function App() {
         </div>
       </header>
 
-      {/* Search & Categories (Only for recipes feed) */}
+      {/* Search Area (Only for recipes feed) */}
       {currentTab === 'recipes' && (
-        <>
-          {/* Search Area */}
-          <div className="search-container">
-            <div className="search-wrapper">
-              <Search className="search-icon" size={16} strokeWidth={2.5} />
-              <input 
-                type="text" 
-                className="search-input" 
-                placeholder="搜索菜谱、食材或厨师..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+        <div className="search-container">
+          <div className="search-wrapper">
+            <Search className="search-icon" size={16} strokeWidth={2.5} />
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="搜索菜谱、食材或厨师..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-
-          {/* Category Chips Slider */}
-          <div className="categories-container">
-            <div className="categories-inner">
-              <button 
-                className={`category-chip ${activeCategory === 'all' ? 'active' : ''}`} 
-                onClick={() => setActiveCategory('all')}
-              >全部</button>
-              <button 
-                className={`category-chip ${activeCategory === 'breakfast' ? 'active' : ''}`} 
-                onClick={() => setActiveCategory('breakfast')}
-              >元气早餐</button>
-              <button 
-                className={`category-chip ${activeCategory === 'lunch' ? 'active' : ''}`} 
-                onClick={() => setActiveCategory('lunch')}
-              >高能午餐</button>
-              <button 
-                className={`category-chip ${activeCategory === 'dinner' ? 'active' : ''}`} 
-                onClick={() => setActiveCategory('dinner')}
-              >精致晚餐</button>
-            </div>
-          </div>
-        </>
+        </div>
       )}
 
       {/* Conditional Feeds */}
@@ -1088,7 +986,7 @@ function App() {
               <h3 className="portal-section-title">食材仓库资产</h3>
               <div className="portal-grid">
                 {/* Card 1: Basic Ingredients */}
-                <div className="portal-card" onClick={() => { setSelectedMaterialType('basic'); setActiveCategory('all'); setSearchQuery(''); }}>
+                <div className="portal-card" onClick={() => { setSelectedMaterialType('basic'); setSearchQuery(''); }}>
                   <div className="portal-card-main">
                     <div className="portal-card-icon-wrapper basic">
                       <Carrot size={22} strokeWidth={2.5} />
@@ -1100,14 +998,12 @@ function App() {
                     <ChevronRight size={18} className="portal-card-chevron" />
                   </div>
                   <div className="portal-card-footer">
-                    <span>有库存: <strong>{getStats('basic').inStock}</strong></span>
-                    <span className="divider">|</span>
-                    <span>需采购: <strong className={getStats('basic').need > 0 ? 'text-alert' : ''}>{getStats('basic').need}</strong></span>
+                    <span>已收录: <strong>{getIngredientCount('basic')}</strong> 种常用食材</span>
                   </div>
                 </div>
 
                 {/* Card 2: Seasonings */}
-                <div className="portal-card" onClick={() => { setSelectedMaterialType('seasoning'); setActiveCategory('all'); setSearchQuery(''); }}>
+                <div className="portal-card" onClick={() => { setSelectedMaterialType('seasoning'); setSearchQuery(''); }}>
                   <div className="portal-card-main">
                     <div className="portal-card-icon-wrapper seasoning">
                       <Sparkles size={22} strokeWidth={2.5} />
@@ -1119,14 +1015,12 @@ function App() {
                     <ChevronRight size={18} className="portal-card-chevron" />
                   </div>
                   <div className="portal-card-footer">
-                    <span>有库存: <strong>{getStats('seasoning').inStock}</strong></span>
-                    <span className="divider">|</span>
-                    <span>需采购: <strong className={getStats('seasoning').need > 0 ? 'text-alert' : ''}>{getStats('seasoning').need}</strong></span>
+                    <span>已收录: <strong>{getIngredientCount('seasoning')}</strong> 种调味酱料</span>
                   </div>
                 </div>
 
                 {/* Card 3: Spices */}
-                <div className="portal-card" onClick={() => { setSelectedMaterialType('spice'); setActiveCategory('all'); setSearchQuery(''); }}>
+                <div className="portal-card" onClick={() => { setSelectedMaterialType('spice'); setSearchQuery(''); }}>
                   <div className="portal-card-main">
                     <div className="portal-card-icon-wrapper spice">
                       <Leaf size={22} strokeWidth={2.5} />
@@ -1138,9 +1032,7 @@ function App() {
                     <ChevronRight size={18} className="portal-card-chevron" />
                   </div>
                   <div className="portal-card-footer">
-                    <span>有库存: <strong>{getStats('spice').inStock}</strong></span>
-                    <span className="divider">|</span>
-                    <span>需采购: <strong className={getStats('spice').need > 0 ? 'text-alert' : ''}>{getStats('spice').need}</strong></span>
+                    <span>已收录: <strong>{getIngredientCount('spice')}</strong> 种天然香料</span>
                   </div>
                 </div>
               </div>
@@ -1149,7 +1041,7 @@ function App() {
               <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>录入与管理工具</h3>
               <div className="portal-action-row">
                 {/* Card 3: Enter Ingredient */}
-                <div className="portal-card action-card" onClick={() => { setSelectedMaterialType('entry-ingredient'); }}>
+                <div className="portal-card action-card" onClick={openIngredientForm}>
                   <div className="action-card-content">
                     <div className="portal-card-icon-wrapper entry-ing">
                       <Plus size={20} strokeWidth={2.5} />
@@ -1160,7 +1052,7 @@ function App() {
                 </div>
 
                 {/* Card 4: Enter Recipe */}
-                <div className="portal-card action-card" onClick={() => { setSelectedMaterialType('entry-recipe'); }}>
+                <div className="portal-card action-card" onClick={openRecipeForm}>
                   <div className="action-card-content">
                     <div className="portal-card-icon-wrapper entry-rec">
                       <ChefHat size={20} strokeWidth={2.5} />
@@ -1219,7 +1111,7 @@ function App() {
                 <div className="subview-container">
                   {/* Back Header */}
                   <div className="subview-header">
-                    <button className="btn-back" onClick={() => { setSelectedMaterialType(null); setSearchQuery(''); setActiveCategory('all'); }} title="返回入口">
+                    <button className="btn-back" onClick={() => { setSelectedMaterialType(null); setSearchQuery(''); }} title="返回入口">
                       <ArrowLeft size={18} strokeWidth={2.5} />
                     </button>
                     <div className="subview-title-group">
@@ -1246,58 +1138,6 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Local Filter Chips in Sub-view */}
-                  <div className="subview-filters-container">
-                    <div className="categories-inner">
-                      <button 
-                        className={`category-chip ${activeCategory === 'all' ? 'active' : ''}`} 
-                        onClick={() => setActiveCategory('all')}
-                      >全部 ({ingredients.filter(item => item.type === selectedMaterialType).length})</button>
-                      <button 
-                        className={`category-chip ${activeCategory === 'stock' ? 'active' : ''}`} 
-                        onClick={() => setActiveCategory('stock')}
-                      >有库存 ({ingredients.filter(item => item.type === selectedMaterialType && item.status === 'stock').length})</button>
-                      <button 
-                        className={`category-chip ${activeCategory === 'need' ? 'active' : ''}`} 
-                        onClick={() => setActiveCategory('need')}
-                      >需采购 ({ingredients.filter(item => item.type === selectedMaterialType && item.status === 'need').length})</button>
-                    </div>
-                  </div>
-
-                  {/* Bulk Action Buttons */}
-                  {filteredSubIngredients.length > 0 && (
-                    <div className="subview-actions-bar">
-                      <button 
-                        className="btn-bulk-action"
-                        onClick={() => {
-                          const libItems = ingredientLibraryList.filter(lib => lib.category === selectedMaterialType);
-                          setHomeIngredients(prev => {
-                            const next = [...prev];
-                            libItems.forEach(libItem => {
-                              if (!next.some(item => item.name === libItem.name)) {
-                                next.push({ name: libItem.name, category: libItem.category });
-                              }
-                            });
-                            return next;
-                          });
-                        }}
-                      >
-                        <Check size={13} strokeWidth={2.5} /> 一键设为有库存
-                      </button>
-                      <button 
-                        className="btn-bulk-action secondary"
-                        onClick={() => {
-                          const libNames = ingredientLibraryList
-                            .filter(lib => lib.category === selectedMaterialType)
-                            .map(lib => lib.name);
-                          setHomeIngredients(prev => prev.filter(item => !libNames.includes(item.name)));
-                        }}
-                      >
-                        <Plus size={13} strokeWidth={2.5} /> 一键设为需采购
-                      </button>
-                    </div>
-                  )}
-
                   {/* Detailed Item List */}
                   <div className="ingredients-feed">
                     {filteredSubIngredients.map(item => (
@@ -1322,15 +1162,6 @@ function App() {
                               })}
                             </div>
                           </div>
-                          <div className="ingredient-page-card-action">
-                            <button
-                              onClick={() => toggleIngredientStatus(item.id)}
-                              className={`lozenge ${item.status === 'stock' ? 'lozenge-green' : 'lozenge-orange'}`}
-                              title="点击切换有库存/需采购状态"
-                            >
-                              {item.status === 'stock' ? '有库存' : '需采购'}
-                            </button>
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -1347,418 +1178,323 @@ function App() {
                 </div>
               )}
 
-              {/* Form 1: Enter Ingredient */}
-              {selectedMaterialType === 'entry-ingredient' && (
-                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
-                  {/* Back Header */}
-                  <div className="subview-header">
-                    <button className="btn-back" onClick={() => setSelectedMaterialType(null)} title="返回入口">
-                      <ArrowLeft size={18} strokeWidth={2.5} />
-                    </button>
-                    <div className="subview-title-group">
-                      <h2 className="subview-title">录入食材</h2>
-                      <span className="subview-subtitle">添加自定义材料至食材库</span>
-                    </div>
-                  </div>
-                  <div className="entry-container" style={{ flexGrow: 1 }}>
-                    <form onSubmit={handleAddCustomIngredient} className="entry-form-container">
-                      {ingFormMessage && <div className="form-message-banner">{ingFormMessage}</div>}
-                      
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">食材名称</label>
-                        <input 
-                          type="text" 
-                          className="entry-form-input"
-                          placeholder="例如：西红柿、五花肉、生抽、大蒜"
-                          value={newIngName}
-                          onChange={(e) => setNewIngName(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">食材品类</label>
-                        <select 
-                          className="entry-form-select"
-                          value={newIngCategory}
-                          onChange={(e) => setNewIngCategory(e.target.value)}
-                        >
-                          <option value="basic">基础食材 (蔬菜、鲜肉、蛋类等)</option>
-                          <option value="seasoning">调味酱料 (盐、糖、生抽、豆瓣酱等)</option>
-                          <option value="spice">香料 (姜、蒜、花椒、八角等)</option>
-                        </select>
-                      </div>
-
-                      <button type="submit" className="btn-bulk-action" style={{ marginTop: 'var(--spacing-xs)', width: '100%', height: '40px' }}>
-                        保存食材
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              )}
-
-              {/* Form 2: Enter Recipe */}
-              {selectedMaterialType === 'entry-recipe' && (
-                <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
-                  {/* Back Header */}
-                  <div className="subview-header">
-                    <button className="btn-back" onClick={() => setSelectedMaterialType(null)} title="返回入口">
-                      <ArrowLeft size={18} strokeWidth={2.5} />
-                    </button>
-                    <div className="subview-title-group">
-                      <h2 className="subview-title">录入菜谱</h2>
-                      <span className="subview-subtitle">录入您的专属美味私房菜谱</span>
-                    </div>
-                  </div>
-                  <div className="entry-container" style={{ flexGrow: 1 }}>
-                    <form onSubmit={handleAddCustomRecipe} className="entry-form-container">
-                      {recipeFormMessage && <div className="form-message-banner">{recipeFormMessage}</div>}
-
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">菜谱名称</label>
-                        <input 
-                          type="text" 
-                          className="entry-form-input"
-                          placeholder="例如：经典红烧肉"
-                          value={newRecipeTitle}
-                          onChange={(e) => setNewRecipeTitle(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">菜谱类别</label>
-                        <select 
-                          className="entry-form-select"
-                          value={newRecipeCategory}
-                          onChange={(e) => setNewRecipeCategory(e.target.value)}
-                        >
-                          <option value="breakfast">元气早餐</option>
-                          <option value="lunch">高能午餐</option>
-                          <option value="dinner">精致晚餐</option>
-                        </select>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                        <div className="entry-form-group" style={{ flex: 1 }}>
-                          <label className="entry-form-label">准备时间 (分钟)</label>
-                          <input 
-                            type="number" 
-                            className="entry-form-input"
-                            placeholder="如：15"
-                            value={newRecipePrepTime}
-                            onChange={(e) => setNewRecipePrepTime(e.target.value)}
-                          />
-                        </div>
-                        <div className="entry-form-group" style={{ flex: 1 }}>
-                          <label className="entry-form-label">烹饪时间 (分钟)</label>
-                          <input 
-                            type="number" 
-                            className="entry-form-input"
-                            placeholder="如：20"
-                            value={newRecipeCookTime}
-                            onChange={(e) => setNewRecipeCookTime(e.target.value)}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">烹饪难度</label>
-                        <select 
-                          className="entry-form-select"
-                          value={newRecipeDifficulty}
-                          onChange={(e) => setNewRecipeDifficulty(e.target.value)}
-                        >
-                          <option value="easy">极易上手</option>
-                          <option value="medium">中等难度</option>
-                          <option value="hard">困难挑战</option>
-                        </select>
-                      </div>
-
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">菜式描述</label>
-                        <textarea 
-                          className="entry-form-textarea"
-                          placeholder="简单介绍一下这道菜的特色和风味..."
-                          value={newRecipeDesc}
-                          onChange={(e) => setNewRecipeDesc(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Dynamic Ingredients list */}
-                      <div className="entry-form-group">
-                        <label className="entry-form-label">所需材料清单</label>
-                        <div className="entry-form-row-group">
-                          {newRecipeIngredients.map((ing, idx) => (
-                             <div key={idx} className="dynamic-row">
-                              <select
-                                className="entry-form-select"
-                                style={{ flex: 0.8, minWidth: '55px', height: '34px', padding: '0 4px', fontSize: '12px' }}
-                                value={ing.type || 'basic'}
-                                onChange={(e) => {
-                                  const updated = [...newRecipeIngredients];
-                                  updated[idx].type = e.target.value;
-                                  setNewRecipeIngredients(updated);
-                                }}
-                              >
-                                <option value="basic">主料</option>
-                                <option value="seasoning">辅料</option>
-                                <option value="spice">香料</option>
-                              </select>
-                              <input 
-                                type="text" 
-                                className="entry-form-input"
-                                placeholder="食材名称，如：猪肉"
-                                value={ing.name}
-                                onChange={(e) => {
-                                  const updated = [...newRecipeIngredients];
-                                  updated[idx].name = e.target.value;
-                                  setNewRecipeIngredients(updated);
-                                }}
-                                style={{ flex: 2 }}
-                              />
-                              <input 
-                                type="text" 
-                                className="entry-form-input"
-                                placeholder="分量，如：300克"
-                                value={ing.amount}
-                                onChange={(e) => {
-                                  const updated = [...newRecipeIngredients];
-                                  updated[idx].amount = e.target.value;
-                                  setNewRecipeIngredients(updated);
-                                }}
-                                style={{ flex: 1 }}
-                              />
-                              {newRecipeIngredients.length > 1 && (
-                                <button 
-                                  type="button" 
-                                  className="btn-row-action delete"
-                                  onClick={() => {
-                                    setNewRecipeIngredients(newRecipeIngredients.filter((_, i) => i !== idx));
-                                  }}
-                                >
-                                  <X size={14} />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          <button 
-                            type="button" 
-                            className="recipe-link-btn" 
-                            onClick={() => setNewRecipeIngredients([...newRecipeIngredients, { name: '', amount: '', type: 'basic' }])}
-                            style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
-                          >
-                            <Plus size={12} strokeWidth={3} /> 添加一行材料
-                          </button>
-                        </div>
-                      </div>
-
-                  {/* Dynamic Steps list */}
-                  <div className="entry-form-group">
-                    <label className="entry-form-label">烹饪步骤</label>
-                    <div className="entry-form-row-group">
-                      {newRecipeSteps.map((step, idx) => (
-                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: idx < newRecipeSteps.length - 1 ? '1px solid var(--ds-border)' : 'none', paddingBottom: idx < newRecipeSteps.length - 1 ? 'var(--spacing-xs)' : '0' }}>
-                          <div className="dynamic-row">
-                            <input 
-                              type="text" 
-                              className="entry-form-input"
-                              placeholder={`步骤 ${idx + 1} 标题 (如: 食材准备)`}
-                              value={step.title}
-                              onChange={(e) => {
-                                const updated = [...newRecipeSteps];
-                                updated[idx].title = e.target.value;
-                                setNewRecipeSteps(updated);
-                              }}
-                              style={{ flex: 2 }}
-                            />
-                            <input 
-                              type="number" 
-                              className="entry-form-input"
-                              placeholder="定时秒数 (可选)"
-                              value={step.duration}
-                              onChange={(e) => {
-                                const updated = [...newRecipeSteps];
-                                updated[idx].duration = e.target.value;
-                                setNewRecipeSteps(updated);
-                              }}
-                              style={{ flex: 1 }}
-                            />
-                            {newRecipeSteps.length > 1 && (
-                              <button 
-                                type="button" 
-                                className="btn-row-action delete"
-                                onClick={() => {
-                                  setNewRecipeSteps(newRecipeSteps.filter((_, i) => i !== idx));
-                                }}
-                              >
-                                <X size={14} />
-                              </button>
-                            )}
-                          </div>
-                          {/* Quick Insert Pills */}
-                          {newRecipeIngredients.filter(ing => ing.name.trim() !== '').length > 0 && (
-                            <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '4px 0 6px 0' }}>
-                              <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
-                              {newRecipeIngredients
-                                .filter(ing => ing.name.trim() !== '')
-                                .map((ing, i) => {
-                                  const tagType = ing.type || 'basic';
-                                  const labelColor = tagType === 'basic' ? '#d03e2d' : tagType === 'seasoning' ? '#00875a' : '#6554c0';
-                                  const bgColor = tagType === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tagType === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
-                                  const typeLabel = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
-                                  return (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => insertTagIntoStep(idx, ing.name.trim(), tagType)}
-                                      className="category-chip"
-                                      style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
-                                    >
-                                      <span style={{ fontWeight: '700', color: labelColor }}>{typeLabel}</span>
-                                      <span>{ing.name}</span>
-                                    </button>
-                                  );
-                                })}
-                            </div>
-                          )}
-                          <textarea 
-                            id={`step-textarea-${idx}`}
-                            className="entry-form-textarea"
-                            placeholder="描述具体步骤，可用[材料名]来标记高亮（例如：放入[豆腐]翻炒）"
-                            value={step.desc}
-                            onChange={(e) => {
-                              const updated = [...newRecipeSteps];
-                              updated[idx].desc = e.target.value;
-                              setNewRecipeSteps(updated);
-                            }}
-                            style={{ minHeight: '60px' }}
-                          />
-                        </div>
-                      ))}
-                      <button 
-                        type="button" 
-                        className="recipe-link-btn" 
-                        onClick={() => setNewRecipeSteps([...newRecipeSteps, { title: '', desc: '', duration: '' }])}
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
-                      >
-                        <Plus size={12} strokeWidth={3} /> 添加下一个步骤
-                      </button>
-                    </div>
-                  </div>
-
-                  <button type="submit" className="btn-bulk-action" style={{ marginTop: 'var(--spacing-xs)', width: '100%', height: '40px' }}>
-                    保存菜谱
-                  </button>
-                </form>
-              </div>
-            </div>
+            </>
           )}
-        </>
+        </div>
       )}
-    </div>
-  )}
 
-      {currentTab === 'prep' && (
-        /* 现有食材 list view */
-        <div className="subview-container" style={{ paddingBottom: 'calc(var(--spacing-xl) + 60px + env(safe-area-inset-bottom, 0px))' }}>
-          {/* Header */}
-          <div className="subview-header" style={{ paddingLeft: 'var(--spacing-md)' }}>
-            <div className="subview-title-group">
-              <h2 className="subview-title">现有食材</h2>
-              <span className="subview-subtitle" style={{ fontSize: '12px', marginTop: '4px' }}>
-                分别管理厨房中现存的基础食材和调料囤货。
-              </span>
+
+      {/* ===== Ingredient Entry Modal ===== */}
+      {showIngredientForm && (
+        <div
+          className={`recipe-modal ${showIngredientFormActive ? 'active' : ''}`}
+          onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetIngredientForm(); }}
+        >
+          <div className="modal-content-container form-modal-container">
+            <div className="modal-handle-bar" />
+            <button className="modal-close-btn" onClick={resetIngredientForm} aria-label="关闭">
+              <X size={16} strokeWidth={2.5} />
+            </button>
+            <div className="form-modal-header">
+              <h2 className="form-modal-title">录入食材</h2>
+              <p className="form-modal-subtitle">添加自定义材料至食材库</p>
             </div>
-          </div>
+            <div className="modal-body form-modal-body">
+              <form onSubmit={handleAddCustomIngredient} className="entry-form-container">
+                {ingFormMessage && <div className="form-message-banner">{ingFormMessage}</div>}
 
-          <div style={{ padding: '0 var(--spacing-md)', overflowY: 'auto', flexGrow: 1 }}>
-            {/* Basic Ingredients Section */}
-            <div>
-              <div className="feed-header" style={{ margin: 'var(--spacing-md) 0 var(--spacing-xs)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>基础食材</span>
-                <button 
-                  className="recipe-link-btn"
-                  onClick={() => {
-                    setLibraryActiveCategory('basic');
-                    setIsLibraryModalOpen(true);
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}
-                >
-                  <Plus size={12} strokeWidth={3} /> 添加食材
-                </button>
-              </div>
-              {homeIngredients.filter(item => item.category === 'basic').length === 0 ? (
-                <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', padding: '12px 8px', background: 'var(--ds-background-neutral-subtle)', borderRadius: '6px', textAlign: 'center', border: '1px dashed var(--ds-border)' }}>
-                  暂未添加现有食材，点击右侧“添加食材”从库中选择
+                <div className="entry-form-group">
+                  <label className="entry-form-label">食材名称</label>
+                  <input
+                    type="text"
+                    className="entry-form-input"
+                    placeholder="例如：西红柿、五花肉、生抽、大蒜"
+                    value={newIngName}
+                    onChange={(e) => setNewIngName(e.target.value)}
+                    autoFocus
+                  />
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 'var(--spacing-md)' }}>
-                  {homeIngredients
-                    .filter(item => item.category === 'basic')
-                    .map(item => (
-                      <div 
-                        key={item.name}
-                        className="home-tag"
-                      >
-                        <span>{item.name}</span>
-                        <button
-                          onClick={() => handleRemoveHomeIngredient(item.name)}
-                          className="remove-btn"
-                          title="移除此项"
-                        >
-                          <X size={12} strokeWidth={3} />
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
 
-            {/* Seasonings Section */}
-            <div style={{ marginTop: 'var(--spacing-lg)' }}>
-              <div className="feed-header" style={{ margin: 'var(--spacing-md) 0 var(--spacing-xs)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>调味酱料</span>
-                <button 
-                  className="recipe-link-btn"
-                  onClick={() => {
-                    setLibraryActiveCategory('seasoning');
-                    setIsLibraryModalOpen(true);
-                  }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '2px', textDecoration: 'none' }}
-                >
-                  <Plus size={12} strokeWidth={3} /> 添加调料
+                <div className="entry-form-group">
+                  <label className="entry-form-label">食材品类</label>
+                  <select
+                    className="entry-form-select"
+                    value={newIngCategory}
+                    onChange={(e) => setNewIngCategory(e.target.value)}
+                  >
+                    <option value="basic">基础食材 (蔬菜、鲜肉、蛋类等)</option>
+                    <option value="seasoning">调味酱料 (盐、糖、生抽、豆瓣酱等)</option>
+                    <option value="spice">香料 (姜、蒜、花椒、八角等)</option>
+                  </select>
+                </div>
+
+                <button type="submit" className="btn-bulk-action" style={{ marginTop: 'var(--spacing-xs)', width: '100%', height: '44px' }}>
+                  保存食材
                 </button>
-              </div>
-              {homeIngredients.filter(item => item.category === 'seasoning').length === 0 ? (
-                <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', padding: '12px 8px', background: 'var(--ds-background-neutral-subtle)', borderRadius: '6px', textAlign: 'center', border: '1px dashed var(--ds-border)' }}>
-                  暂未添加现有调料，点击右侧“添加调料”从库中选择
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 'var(--spacing-md)' }}>
-                  {homeIngredients
-                    .filter(item => item.category === 'seasoning')
-                    .map(item => (
-                      <div 
-                        key={item.name}
-                        className="home-tag"
-                      >
-                        <span>{item.name}</span>
-                        <button
-                          onClick={() => handleRemoveHomeIngredient(item.name)}
-                          className="remove-btn"
-                          title="移除此项"
-                        >
-                          <X size={12} strokeWidth={3} />
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              )}
+              </form>
             </div>
           </div>
         </div>
       )}
 
-      {/* Detail Bottom Sheet Modal */}
+      {/* ===== Recipe Entry Modal ===== */}
+      {showRecipeForm && (
+        <div
+          className={`recipe-modal ${showRecipeFormActive ? 'active' : ''}`}
+          onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetRecipeForm(); }}
+        >
+          <div className="modal-content-container form-modal-container">
+            <div className="modal-handle-bar" />
+            <button className="modal-close-btn" onClick={resetRecipeForm} aria-label="关闭">
+              <X size={16} strokeWidth={2.5} />
+            </button>
+            <div className="form-modal-header">
+              <h2 className="form-modal-title">录入菜谱</h2>
+              <p className="form-modal-subtitle">录入您的专属美味私房菜谱</p>
+            </div>
+            <div className="modal-body form-modal-body">
+              <form onSubmit={handleAddCustomRecipe} className="entry-form-container">
+                {recipeFormMessage && <div className="form-message-banner">{recipeFormMessage}</div>}
+
+                <div className="entry-form-group">
+                  <label className="entry-form-label">菜谱名称</label>
+                  <input
+                    type="text"
+                    className="entry-form-input"
+                    placeholder="例如：经典红烧肉"
+                    value={newRecipeTitle}
+                    onChange={(e) => setNewRecipeTitle(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="entry-form-group">
+                  <label className="entry-form-label">菜谱类别</label>
+                  <select
+                    className="entry-form-select"
+                    value={newRecipeCategory}
+                    onChange={(e) => setNewRecipeCategory(e.target.value)}
+                  >
+                    <option value="breakfast">元气早餐</option>
+                    <option value="lunch">高能午餐</option>
+                    <option value="dinner">精致晚餐</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <div className="entry-form-group" style={{ flex: 1 }}>
+                    <label className="entry-form-label">准备时间 (分钟)</label>
+                    <input
+                      type="number"
+                      className="entry-form-input"
+                      placeholder="如：15"
+                      value={newRecipePrepTime}
+                      onChange={(e) => setNewRecipePrepTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="entry-form-group" style={{ flex: 1 }}>
+                    <label className="entry-form-label">烹饪时间 (分钟)</label>
+                    <input
+                      type="number"
+                      className="entry-form-input"
+                      placeholder="如：20"
+                      value={newRecipeCookTime}
+                      onChange={(e) => setNewRecipeCookTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="entry-form-group">
+                  <label className="entry-form-label">烹饪难度</label>
+                  <select
+                    className="entry-form-select"
+                    value={newRecipeDifficulty}
+                    onChange={(e) => setNewRecipeDifficulty(e.target.value)}
+                  >
+                    <option value="easy">极易上手</option>
+                    <option value="medium">中等难度</option>
+                    <option value="hard">困难挑战</option>
+                  </select>
+                </div>
+
+                <div className="entry-form-group">
+                  <label className="entry-form-label">菜式描述</label>
+                  <textarea
+                    className="entry-form-textarea"
+                    placeholder="简单介绍一下这道菜的特色和风味..."
+                    value={newRecipeDesc}
+                    onChange={(e) => setNewRecipeDesc(e.target.value)}
+                  />
+                </div>
+
+                {/* Dynamic Ingredients list */}
+                <div className="entry-form-group">
+                  <label className="entry-form-label">所需材料清单</label>
+                  <div className="entry-form-row-group">
+                    {newRecipeIngredients.map((ing, idx) => (
+                      <div key={idx} className="dynamic-row">
+                        <select
+                          className="entry-form-select"
+                          style={{ flex: 0.8, minWidth: '55px', height: '34px', padding: '0 4px', fontSize: '12px' }}
+                          value={ing.type || 'basic'}
+                          onChange={(e) => {
+                            const updated = [...newRecipeIngredients];
+                            updated[idx].type = e.target.value;
+                            setNewRecipeIngredients(updated);
+                          }}
+                        >
+                          <option value="basic">主料</option>
+                          <option value="seasoning">辅料</option>
+                          <option value="spice">香料</option>
+                        </select>
+                        <input
+                          type="text"
+                          className="entry-form-input"
+                          placeholder="食材名称，如：猪肉"
+                          value={ing.name}
+                          onChange={(e) => {
+                            const updated = [...newRecipeIngredients];
+                            updated[idx].name = e.target.value;
+                            setNewRecipeIngredients(updated);
+                          }}
+                          style={{ flex: 2 }}
+                        />
+                        <input
+                          type="text"
+                          className="entry-form-input"
+                          placeholder="分量，如：300克"
+                          value={ing.amount}
+                          onChange={(e) => {
+                            const updated = [...newRecipeIngredients];
+                            updated[idx].amount = e.target.value;
+                            setNewRecipeIngredients(updated);
+                          }}
+                          style={{ flex: 1 }}
+                        />
+                        {newRecipeIngredients.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-row-action delete"
+                            onClick={() => setNewRecipeIngredients(newRecipeIngredients.filter((_, i) => i !== idx))}
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="recipe-link-btn"
+                      onClick={() => setNewRecipeIngredients([...newRecipeIngredients, { name: '', amount: '', type: 'basic' }])}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
+                    >
+                      <Plus size={12} strokeWidth={3} /> 添加一行材料
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dynamic Steps list */}
+                <div className="entry-form-group">
+                  <label className="entry-form-label">烹饪步骤</label>
+                  <div className="entry-form-row-group">
+                    {newRecipeSteps.map((step, idx) => (
+                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: idx < newRecipeSteps.length - 1 ? '1px solid var(--ds-border)' : 'none', paddingBottom: idx < newRecipeSteps.length - 1 ? 'var(--spacing-xs)' : '0' }}>
+                        <div className="dynamic-row">
+                          <input
+                            type="text"
+                            className="entry-form-input"
+                            placeholder={`步骤 ${idx + 1} 标题 (如: 食材准备)`}
+                            value={step.title}
+                            onChange={(e) => {
+                              const updated = [...newRecipeSteps];
+                              updated[idx].title = e.target.value;
+                              setNewRecipeSteps(updated);
+                            }}
+                            style={{ flex: 2 }}
+                          />
+                          <input
+                            type="number"
+                            className="entry-form-input"
+                            placeholder="定时秒数 (可选)"
+                            value={step.duration}
+                            onChange={(e) => {
+                              const updated = [...newRecipeSteps];
+                              updated[idx].duration = e.target.value;
+                              setNewRecipeSteps(updated);
+                            }}
+                            style={{ flex: 1 }}
+                          />
+                          {newRecipeSteps.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn-row-action delete"
+                              onClick={() => setNewRecipeSteps(newRecipeSteps.filter((_, i) => i !== idx))}
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                        {/* Quick Insert Pills */}
+                        {newRecipeIngredients.filter(ing => ing.name.trim() !== '').length > 0 && (
+                          <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '4px 0 6px 0' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
+                            {newRecipeIngredients
+                              .filter(ing => ing.name.trim() !== '')
+                              .map((ing, i) => {
+                                const tagType = ing.type || 'basic';
+                                const labelColor = tagType === 'basic' ? '#d03e2d' : tagType === 'seasoning' ? '#00875a' : '#6554c0';
+                                const bgColor = tagType === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tagType === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
+                                const typeLabel = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
+                                return (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => insertTagIntoStep(idx, ing.name.trim(), tagType)}
+                                    className="category-chip"
+                                    style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
+                                  >
+                                    <span style={{ fontWeight: '700', color: labelColor }}>{typeLabel}</span>
+                                    <span>{ing.name}</span>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        )}
+                        <textarea
+                          id={`step-textarea-${idx}`}
+                          className="entry-form-textarea"
+                          placeholder="描述具体步骤，可用[材料名]来标记高亮（例如：放入[豆腐]翻炒）"
+                          value={step.desc}
+                          onChange={(e) => {
+                            const updated = [...newRecipeSteps];
+                            updated[idx].desc = e.target.value;
+                            setNewRecipeSteps(updated);
+                          }}
+                          style={{ minHeight: '60px' }}
+                        />
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="recipe-link-btn"
+                      onClick={() => setNewRecipeSteps([...newRecipeSteps, { title: '', desc: '', duration: '' }])}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
+                    >
+                      <Plus size={12} strokeWidth={3} /> 添加下一个步骤
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn-bulk-action" style={{ marginTop: 'var(--spacing-xs)', width: '100%', height: '44px' }}>
+                  保存菜谱
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Detail Bottom Sheet Modal ===== */}
       {selectedRecipe && (
         <div className={`recipe-modal ${modalActive ? 'active' : ''}`} onClick={(e) => {
           if (e.target.classList.contains('recipe-modal')) handleCloseRecipe();
@@ -1958,111 +1694,7 @@ function App() {
           <ClipboardList className="bottom-nav-icon" size={20} strokeWidth={2.5} />
           <span className="bottom-nav-label">常用食材</span>
         </button>
-        <button 
-          className={`bottom-nav-item ${currentTab === 'prep' ? 'active' : ''}`}
-          onClick={() => handleTabChange('prep')}
-        >
-          <CookingPot className="bottom-nav-icon" size={20} strokeWidth={2.5} />
-          <span className="bottom-nav-label">现有食材</span>
-        </button>
       </nav>
-
-      {/* Library Add Modal */}
-      {isLibraryModalOpen && (
-        <div className="recipe-modal active" onClick={closeLibraryModal}>
-          <div className="modal-content-container" onClick={(e) => e.stopPropagation()} style={{ height: '75vh' }}>
-            <div className="modal-handle-bar"></div>
-            <button className="modal-close-btn" onClick={closeLibraryModal} aria-label="关闭">
-              <X size={16} strokeWidth={2.5} />
-            </button>
-            
-            <div className="modal-body" style={{ padding: 'var(--spacing-md)', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-              <h3 className="subview-title" style={{ marginBottom: 'var(--spacing-xs)' }}>
-                {libraryActiveCategory === 'basic' ? '从食材库中添加基础食材' : '从食材库中添加调味酱料'}
-              </h3>
-              <p style={{ fontSize: '12px', color: 'var(--ds-text-subtle)', marginBottom: 'var(--spacing-md)' }}>
-                {libraryActiveCategory === 'basic' ? '搜索或选择您现有的食材：' : '搜索或选择您现有的调味酱料：'}
-              </p>
-
-              {/* Local Search inside Library Modal */}
-              <div className="subview-search-wrapper" style={{ padding: '0 0 var(--spacing-sm) 0' }}>
-                <div className="search-wrapper">
-                  <Search className="search-icon" size={16} strokeWidth={2.5} />
-                  <input 
-                    type="text" 
-                    className="search-input" 
-                    placeholder={libraryActiveCategory === 'basic' ? '输入基础食材名称进行过滤或添加...' : '输入调味酱料名称进行过滤或添加...'}
-                    value={libSearchQuery}
-                    onChange={(e) => setLibSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Custom Add Option */}
-              {libSearchQuery.trim() && !ingredientLibraryList.some(item => item.name === libSearchQuery.trim() && item.category === libraryActiveCategory) && !homeIngredients.some(item => item.name === libSearchQuery.trim()) && (
-                <div style={{ marginBottom: 'var(--spacing-md)' }}>
-                  <button
-                    onClick={() => {
-                      const newIng = libSearchQuery.trim();
-                      setHomeIngredients(prev => [...prev, { name: newIng, category: libraryActiveCategory }]);
-                      setLibSearchQuery('');
-                    }}
-                    className="btn-bulk-action"
-                    style={{ justifyContent: 'flex-start', padding: '10px 14px', borderRadius: '4px', width: '100%' }}
-                  >
-                    <Plus size={14} strokeWidth={2.5} /> 直接添加自定义{libraryActiveCategory === 'basic' ? '食材' : '调料'} “{libSearchQuery.trim()}”
-                  </button>
-                </div>
-              )}
-
-              {/* Scrollable list container */}
-              <div style={{ overflowY: 'auto', flexGrow: 1, paddingRight: '4px' }}>
-                {ingredientLibraryList.filter(item => item.category === libraryActiveCategory && item.name.toLowerCase().includes(libSearchQuery.toLowerCase())).length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: 'var(--spacing-md)' }}>
-                    {ingredientLibraryList
-                      .filter(item => item.category === libraryActiveCategory && item.name.toLowerCase().includes(libSearchQuery.toLowerCase()))
-                      .map(item => {
-                        const isAdded = homeIngredients.some(h => h.name === item.name);
-                        return (
-                          <button
-                            key={item.name}
-                            onClick={() => {
-                              setHomeIngredients(prev => 
-                                isAdded ? prev.filter(n => n.name !== item.name) : [...prev, { name: item.name, category: libraryActiveCategory }]
-                              );
-                            }}
-                            className={`category-chip ${isAdded ? 'active' : ''}`}
-                            style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            {isAdded && <Check size={12} strokeWidth={3} />}
-                            {item.name}
-                          </button>
-                        );
-                      })}
-                  </div>
-                )}
-
-                {/* If nothing matches pre-existing list and query is not empty */}
-                {libSearchQuery.trim() && ingredientLibraryList.filter(item => item.category === libraryActiveCategory && item.name.toLowerCase().includes(libSearchQuery.toLowerCase())).length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--ds-text-subtle)', padding: 'var(--spacing-md) 0', fontSize: '13px' }}>
-                    没有在预设库中找到匹配项，直接点击上方按钮添加为自定义项。
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ padding: 'var(--spacing-md)', borderTop: '1px solid var(--ds-border)', display: 'flex', justifyContent: 'flex-end' }}>
-              <button 
-                className="btn-bulk-action" 
-                onClick={closeLibraryModal}
-                style={{ flex: 'none', width: '120px' }}
-              >
-                完成
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Design Tokens - Practical UI 精简规范
+   遵循《Practical UI》精髓：克制阶梯、HSL 调色、双层物理阴影、4 档圆角
+   ========================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------------
+     1. Brand 品牌色 (美食暖橙, Hue = 14) - 仅需 4 档
+     ------------------------------------------------------------------------ */
+  --brand-subtle: hsl(14, 100%, 96%); /* 浅底/胶囊背景 */
+  --brand-base:   hsl(14, 82%,  52%); /* 主按钮/高亮基准色 */
+  --brand-hover:  hsl(14, 82%,  45%); /* 悬浮态 (L 下降 7%) */
+  --brand-text:   hsl(14, 85%,  32%); /* 浅底高对比度文字 (WCAG 4.5:1) */
+
+  /* ------------------------------------------------------------------------
+     2. Neutrals 中性色 (冷蓝灰倾向, Hue = 215, Saturation 10%~20%) - 仅需 6 档
+     ------------------------------------------------------------------------ */
+  --neutral-surface: hsl(215, 20%, 100%); /* 纯白卡片表面 */
+  --neutral-app:     hsl(215, 18%, 97%);  /* 页面全局大底色 */
+  --neutral-subtle:  hsl(215, 15%, 93%);  /* 凹陷底色/输入框/次级悬浮 */
+  --neutral-border:  hsl(215, 14%, 86%);  /* 默认边框与分割线 */
+  --neutral-muted:   hsl(215, 12%, 45%);  /* 副标题/弱说明文字 (满足 4.5:1) */
+  --neutral-text:    hsl(215, 30%, 14%);  /* 大标题与主要正文 */
+
+  /* ------------------------------------------------------------------------
+     3. Semantic Status 状态色 - 每种精简为 2 档 (浅底 bg + 强调字 text)
+     ------------------------------------------------------------------------ */
+  /* Success (绿, Hue = 152) */
+  --status-success-bg:   hsl(152, 70%, 95%);
+  --status-success-text: hsl(152, 90%, 22%);
+
+  /* Danger (红, Hue = 4) */
+  --status-danger-bg:    hsl(4, 100%, 96%);
+  --status-danger-text:  hsl(4, 85%, 38%);
+
+  /* Warning (琥珀黄, Hue = 36) */
+  --status-warning-bg:   hsl(36, 100%, 95%);
+  --status-warning-text: hsl(36, 95%, 32%);
+
+  /* Info (信息蓝, Hue = 212) */
+  --status-info-bg:      hsl(212, 100%, 95%);
+  --status-info-text:    hsl(212, 90%, 35%);
+
+  /* Purple (辅料紫, Hue = 265) */
+  --status-purple-bg:    hsl(265, 80%, 96%);
+  --status-purple-text:  hsl(265, 65%, 40%);
+
+  /* ------------------------------------------------------------------------
+     4. Border Radius 圆角系统 - 仅需 4 档
+     嵌套规则：Inner Radius = Outer Radius - Padding
+     ------------------------------------------------------------------------ */
+  --radius-sm:   4px;    /* 紧凑按钮、输入框、下拉项 */
+  --radius-md:   8px;    /* 标准卡片容器 */
+  --radius-lg:   16px;   /* 模态弹窗、主菜谱卡片 */
+  --radius-full: 9999px; /* 胶囊徽标 Pill、圆形图标按钮 */
+
+  /* ------------------------------------------------------------------------
+     5. Elevation & Shadows 双层物理阴影 - 仅需 3 档
+     规则：Key Shadow(近轮廓) + Ambient Shadow(远弥散)，混入微冷蓝光
+     ------------------------------------------------------------------------ */
+  --shadow-card: 
+    0 1px 2px 0 rgba(18, 30, 49, 0.05),
+    0 0 1px 0 rgba(18, 30, 49, 0.12);
+
+  --shadow-hover: 
+    0 6px 12px -2px rgba(18, 30, 49, 0.10),
+    0 1px 2px 0 rgba(18, 30, 49, 0.16);
+
+  --shadow-overlay: 
+    0 12px 24px -4px rgba(18, 30, 49, 0.14),
+    0 1px 3px 0 rgba(18, 30, 49, 0.18);
+
+  /* ------------------------------------------------------------------------
+     6. Spacing 间距系统 (8pt / 4pt 网格)
+     ------------------------------------------------------------------------ */
+  --spacing-xxs: 4px;
+  --spacing-xs:  8px;
+  --spacing-sm:  12px;
+  --spacing-md:  16px;
+  --spacing-lg:  24px;
+  --spacing-xl:  32px;
+
+  /* ------------------------------------------------------------------------
+     7. Typography 排版与层级
+     ------------------------------------------------------------------------ */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-sm:   12px;
+  --font-size-base: 14px;
+  --font-size-md:   16px;
+  --font-size-lg:   18px;
+  --font-size-xl:   22px;
+
+  /* ------------------------------------------------------------------------
+     8. Motion & Animations (Emil Kowalski 物理动效规范)
+     ------------------------------------------------------------------------ */
+  /* 时长梯度 (Durations) - 严禁超过 350ms */
+  --duration-fast:   150ms; /* 微交互：按钮按压、Tab 切换、图标旋转 */
+  --duration-normal: 250ms; /* 中型展开：下拉菜单、Toast、小面板折叠 */
+  --duration-slow:   350ms; /* 大型结构：模态弹窗打开、全屏抽屉 */
+
+  /* 物理缓动曲线 (Easings) - 杜绝粗糙的浏览器默认 ease */
+  --ease-enter:    cubic-bezier(0.16, 1, 0.3, 1);  /* 进入：高初速入场，平滑刹车 (Ease-out Expo) */
+  --ease-exit:     cubic-bezier(0.7, 0, 0.84, 0);  /* 退出：加速极速离场 (不磨蹭) */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);     /* 内部位移/形变/双向平滑 */
+
+  /* 快捷组合 (Transitions Shortcuts) */
+  --transition-fast:   var(--duration-fast) var(--ease-standard);
+  --transition-base:   var(--duration-normal) var(--ease-standard);
+  --transition-enter:  var(--duration-normal) var(--ease-enter);
+  --transition-exit:   var(--duration-fast) var(--ease-exit);
+
+  /* ========================================================================
+     业务语义兼容别名 (确保代码库现有 class 100% 顺畅运转)
+     ======================================================================== */
+  --ds-background-app:           var(--neutral-app);
+  --ds-background-default:       var(--neutral-surface);
+  --ds-background-surface:       var(--neutral-surface);
+  --ds-background-input:         var(--neutral-app);
+  --ds-background-neutral:       var(--neutral-subtle);
+  --ds-background-neutral-hover: hsl(215, 15%, 89%);
+  --ds-background-brand:         var(--brand-base);
+  --ds-background-brand-hover:   var(--brand-hover);
+
+  --ds-text:                     var(--neutral-text);
+  --ds-text-subtle:              var(--neutral-muted);
+  --ds-text-brand:               var(--brand-text);
+  --ds-text-inverse:             var(--neutral-surface);
+
+  --ds-border:                   var(--neutral-border);
+  --ds-border-brand:             var(--brand-base);
+  --ds-border-focus:             hsl(14, 85%, 65%);
+
+  --ds-shadow-raised:            var(--shadow-card);
+  --ds-shadow-overlay:           var(--shadow-overlay);
+
+  --ds-badge-green-bg:           var(--status-success-bg);
+  --ds-badge-green-txt:          var(--status-success-text);
+  --ds-badge-red-bg:             var(--status-danger-bg);
+  --ds-badge-red-txt:            var(--status-danger-text);
+  --ds-badge-blue-bg:            var(--status-info-bg);
+  --ds-badge-blue-txt:           var(--status-info-text);
+  --ds-badge-orange-bg:          var(--brand-subtle);
+  --ds-badge-orange-txt:         var(--brand-text);
+  --ds-badge-purple-bg:          var(--status-purple-bg);
+  --ds-badge-purple-txt:         var(--status-purple-text);
+}
+
+/* ==========================================================================
+   Dark Theme (暗黑模式极简映射)
+   规则：高程 Elevation 依赖表面明度逐级上升 (L: 8% -> 13% -> 17%)
+   ========================================================================== */
+[data-theme="dark"] {
+  /* 1. Brand (暗底适度提亮，降低饱和度防止刺眼) */
+  --brand-subtle: hsl(14, 45%, 18%);
+  --brand-base:   hsl(14, 85%, 65%);
+  --brand-hover:  hsl(14, 85%, 72%);
+  --brand-text:   hsl(14, 90%, 75%);
+
+  /* 2. Neutrals (表面明度递增) */
+  --neutral-surface: hsl(215, 22%, 13%); /* 卡片表面 (L=13%) */
+  --neutral-app:     hsl(215, 28%, 8%);  /* 页面大底色 (最暗 L=8%) */
+  --neutral-subtle:  hsl(215, 18%, 18%); /* 次级悬浮/凹陷 (L=18%) */
+  --neutral-border:  hsl(215, 16%, 24%); /* 边框 */
+  --neutral-muted:   hsl(215, 12%, 70%); /* 副文本 (舒适对比度) */
+  --neutral-text:    hsl(215, 15%, 90%); /* 主正文 (不用死白 #FFF，防眩光) */
+
+  /* 3. Status (暗底柔光) */
+  --status-success-bg:   hsl(152, 45%, 15%);
+  --status-success-text: hsl(152, 70%, 65%);
+  --status-danger-bg:    hsl(4, 50%, 16%);
+  --status-danger-text:  hsl(4, 85%, 72%);
+  --status-warning-bg:   hsl(36, 50%, 16%);
+  --status-warning-text: hsl(36, 85%, 72%);
+  --status-info-bg:      hsl(212, 50%, 16%);
+  --status-info-text:    hsl(212, 80%, 72%);
+  --status-purple-bg:    hsl(265, 40%, 18%);
+  --status-purple-text:  hsl(265, 75%, 75%);
+
+  /* 4. Shadows (暗底阴影更深) */
+  --shadow-card: 
+    0 1px 3px 0 rgba(0, 0, 0, 0.40),
+    0 0 1px 0 rgba(0, 0, 0, 0.50);
+
+  --shadow-hover: 
+    0 6px 14px -2px rgba(0, 0, 0, 0.60),
+    0 1px 2px 0 rgba(0, 0, 0, 0.65);
+
+  --shadow-overlay: 
+    0 16px 32px -4px rgba(0, 0, 0, 0.75),
+    0 1px 3px 0 rgba(0, 0, 0, 0.70);
+
+  /* 5. 业务别名同步映射 */
+  --ds-background-app:           var(--neutral-app);
+  --ds-background-default:       var(--neutral-surface);
+  --ds-background-surface:       var(--neutral-surface);
+  --ds-background-input:         hsl(215, 20%, 10%);
+  --ds-background-neutral:       var(--neutral-subtle);
+  --ds-background-neutral-hover: hsl(215, 18%, 24%);
+  --ds-background-brand:         var(--brand-base);
+  --ds-background-brand-hover:   var(--brand-hover);
+
+  --ds-text:                     var(--neutral-text);
+  --ds-text-subtle:              var(--neutral-muted);
+  --ds-text-brand:               var(--brand-text);
+  --ds-text-inverse:             var(--neutral-app);
+
+  --ds-border:                   var(--neutral-border);
+  --ds-border-brand:             var(--brand-base);
+  --ds-border-focus:             hsl(14, 85%, 75%);
+
+  --ds-shadow-raised:            var(--shadow-card);
+  --ds-shadow-overlay:           var(--shadow-overlay);
+
+  --ds-badge-green-bg:           var(--status-success-bg);
+  --ds-badge-green-txt:          var(--status-success-text);
+  --ds-badge-red-bg:             var(--status-danger-bg);
+  --ds-badge-red-txt:            var(--status-danger-text);
+  --ds-badge-blue-bg:            var(--status-info-bg);
+  --ds-badge-blue-txt:           var(--status-info-text);
+  --ds-badge-orange-bg:          var(--brand-subtle);
+  --ds-badge-orange-txt:         var(--brand-text);
+  --ds-badge-purple-bg:          var(--status-purple-bg);
+  --ds-badge-purple-txt:         var(--status-purple-text);
+}
+
+/* ==========================================================================
+   无障碍降级 (Accessibility - prefers-reduced-motion)
+   系统开启减弱动画时，所有动效时长降为 0ms，防止晕动症眩晕
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast:   0ms;
+    --duration-normal: 0ms;
+    --duration-slow:   0ms;
+  }
+}
