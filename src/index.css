@@ -452,8 +452,8 @@ header {
   height: 32px;
   border-radius: var(--radius-full);
   border: none;
-  background-color: var(--ds-background-neutral);
-  color: var(--ds-text);
+  background-color: var(--ds-text);
+  color: var(--ds-background-default);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -463,7 +463,13 @@ header {
 }
 
 .modal-close-btn:hover {
-  background-color: var(--ds-background-neutral-hover);
+  background-color: var(--ds-text-subtle);
+}
+
+.modal-close-btn:focus-visible {
+  outline: 2px solid var(--ds-text);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--ds-background-default);
 }
 
 .modal-body {
