@@ -1191,7 +1191,6 @@ function App() {
           onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetIngredientForm(); }}
         >
           <div className="modal-content-container form-modal-container">
-            <div className="modal-handle-bar" />
             <button className="modal-close-btn" onClick={resetIngredientForm} aria-label="关闭">
               <X size={16} strokeWidth={2.5} />
             </button>
@@ -1244,7 +1243,6 @@ function App() {
           onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetRecipeForm(); }}
         >
           <div className="modal-content-container form-modal-container">
-            <div className="modal-handle-bar" />
             <button className="modal-close-btn" onClick={resetRecipeForm} aria-label="关闭">
               <X size={16} strokeWidth={2.5} />
             </button>
@@ -1500,7 +1498,6 @@ function App() {
           if (e.target.classList.contains('recipe-modal')) handleCloseRecipe();
         }}>
           <div className="modal-content-container">
-            <div className="modal-handle-bar"></div>
             <button className="modal-close-btn" onClick={handleCloseRecipe} aria-label="关闭">
               <X size={16} strokeWidth={2.5} />
             </button>

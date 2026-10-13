@@ -434,16 +434,7 @@ header {
   transform: translateY(0) translateZ(0);
 }
 
-/* Modal Close Header */
-.modal-handle-bar {
-  width: 36px;
-  height: 4px;
-  background-color: var(--ds-border);
-  border-radius: var(--radius-xs);
-  margin: var(--spacing-xs) auto;
-  flex-shrink: 0;
-}
-
+/* Modal Close Button */
 .modal-close-btn {
   position: absolute;
   top: var(--spacing-md);
