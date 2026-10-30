@@ -2026,11 +2026,157 @@ header {
   min-width: 0;
 }
 
-/* Recipe Entry Form: Ingredient Cards Flow & Interactions */
-.ing-cards-flow {
+/* Recipe Entry Form: Standard Ingredient Form Groups List */
+.ingredient-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ingredient-item-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md, 8px);
+  background-color: var(--ds-background-default);
+  border: 1px solid var(--ds-border-input);
+  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ingredient-item-group:focus-within {
+  border-color: var(--ds-border-brand);
+  box-shadow: 0 2px 6px rgba(224, 112, 32, 0.08);
+}
+
+.ingredient-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border-input);
+}
+
+.ingredient-item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ds-text);
+  letter-spacing: 0.2px;
+}
+
+.ingredient-del-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-badge-red-txt);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.ingredient-del-btn:hover {
+  background-color: var(--ds-badge-red-bg);
+}
+
+.entry-form-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.ingredient-extra-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--ds-border-input);
+}
+
+.ingredient-checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--ds-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ingredient-checkbox-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ds-border-brand);
+  cursor: pointer;
+}
+
+.ingredient-add-alt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ds-text-brand);
+  background: transparent;
+  border: 1px dashed var(--ds-border-brand);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ingredient-add-alt-btn:hover {
+  background-color: var(--brand-subtle);
+}
+
+.ingredient-alts-box {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background-color: var(--ds-background-neutral);
+  border: 1px solid var(--ds-border-input);
+}
+
+.ingredient-alts-header {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+}
+
+.ingredient-alt-item {
+  align-items: flex-end;
+}
+
+.btn-add-ingredient-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px dashed var(--ds-border-brand);
+  border-radius: 8px;
+  background-color: var(--brand-subtle);
+  color: var(--ds-text-brand);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 4px;
+}
+
+.btn-add-ingredient-item:hover {
+  background-color: rgba(224, 112, 32, 0.15);
+  border-color: var(--ds-text-brand);
 }
 
 .ing-entry-card {
@@ -2040,304 +2186,9 @@ header {
   padding: 10px 12px;
   border-radius: var(--radius-md, 8px);
   background-color: var(--ds-background-default);
-  border: 1px solid var(--ds-border);
+  border: 1px solid var(--ds-border-input);
   box-shadow: 0 1px 2px rgba(9, 30, 66, 0.04);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.recipe-ingredient-card {
-  position: relative;
-  border-left: 3px solid var(--ds-border);
-}
-
-.recipe-ingredient-card:focus-within {
-  border-color: var(--ds-border-brand);
-  border-left-color: var(--ds-border-brand);
-  box-shadow: 0 2px 6px rgba(224, 112, 32, 0.08);
-}
-
-.recipe-ingredient-card.is-optional {
-  border-left: 3px dashed var(--ds-text-subtle);
-  background-color: var(--ds-background-default);
-}
-
-/* Card Header */
-.ing-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 2px;
-}
-
-.ing-card-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ing-card-order-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ds-text-subtle);
-  background-color: var(--ds-background-neutral);
-  padding: 2px 7px;
-  border-radius: 4px;
-  letter-spacing: 0.2px;
-}
-
-/* Mini Segmented Control for Category */
-.ing-type-segmented {
-  display: inline-flex;
-  background-color: var(--ds-background-neutral);
-  border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
-  border: 1px solid var(--ds-border);
-}
-
-.ing-type-pill {
-  border: none;
-  background: transparent;
-  color: var(--ds-text-subtle);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 3px 9px;
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.15s ease;
-  line-height: 1.2;
-}
-
-.ing-type-pill:hover {
-  color: var(--ds-text);
-}
-
-.ing-type-pill.active {
-  background-color: var(--ds-background-default);
-  color: var(--ds-text-brand);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(9, 30, 66, 0.1);
-}
-
-/* Delete Ingredient Card Button */
-.ing-card-delete-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--ds-text-subtle);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ing-card-delete-btn:hover {
-  background-color: var(--ds-badge-red-bg);
-  color: var(--ds-badge-red-txt);
-}
-
-/* Inputs Grid (Name + Amount) */
-.ing-card-inputs-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 8px;
-}
-
-.ing-input-field {
-  display: flex;
-}
-
-.ing-card-inputs-grid .entry-form-input.ing-input {
-  width: 100%;
-  padding: 7px 10px;
-  font-size: 13.5px;
-  border-radius: 6px;
-  border: 1px solid var(--ds-border-input);
-  background-color: var(--ds-background-input);
-  box-sizing: border-box;
-}
-
-.ing-card-inputs-grid .entry-form-input.ing-input:hover {
-  border-color: hsl(215, 18%, 80%);
-}
-
-.ing-card-inputs-grid .entry-form-input.ing-input:focus {
-  border-color: var(--ds-border-brand);
-  background-color: var(--ds-background-default);
-  box-shadow: 0 0 0 2px var(--brand-subtle);
-}
-
-/* Toolbar (Optional chip + Add Alternative button) */
-.ing-entry-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 2px;
-}
-
-.ing-opt-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--ds-border);
-  background-color: var(--ds-background-neutral);
-  color: var(--ds-text-subtle);
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ing-opt-chip:hover {
-  border-color: var(--ds-text-subtle);
-  color: var(--ds-text);
-}
-
-.ing-opt-chip.active {
-  background-color: var(--brand-subtle);
-  border-color: var(--ds-border-brand);
-  color: var(--ds-text-brand);
-  font-weight: 600;
-}
-
-.ing-alt-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 6px;
-  border: 1px dashed var(--ds-border-brand);
-  background: transparent;
-  color: var(--ds-text-brand);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ing-alt-add-btn:hover {
-  background-color: var(--brand-subtle);
-}
-
-/* Alternatives Tray */
-.ing-alts-tray {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background-color: var(--ds-background-neutral);
-  border: 1px solid var(--ds-border);
-  margin-top: 2px;
-}
-
-.ing-alts-tray-header {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ds-text-subtle);
-}
-
-.ing-alt-card-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ing-alt-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--ds-text-brand);
-  background-color: var(--brand-subtle);
-  border: 1px solid var(--ds-border-brand);
-  border-radius: 4px;
-  padding: 2px 6px;
-  flex-shrink: 0;
-}
-
-.ing-alt-input {
-  flex: 1.6;
-  min-width: 0;
-  padding: 6px 8px;
-  font-size: 12.5px;
-  border-radius: 5px;
-  border: 1px solid var(--ds-border-input);
-  background-color: var(--ds-background-default);
-  color: var(--ds-text);
-  box-sizing: border-box;
-}
-
-.ing-alt-input:hover {
-  border-color: hsl(215, 18%, 80%);
-}
-
-.ing-alt-input.amount {
-  flex: 1;
-}
-
-.ing-alt-input:focus {
-  border-color: var(--ds-border-brand);
-  outline: none;
-  box-shadow: 0 0 0 2px var(--brand-subtle);
-}
-
-.ing-alt-del-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--ds-text-subtle);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.ing-alt-del-btn:hover {
-  background-color: var(--ds-badge-red-bg);
-  color: var(--ds-badge-red-txt);
-}
-
-/* Add Ingredient Card Full-width Button */
-.ing-add-card-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 9px 16px;
-  border: 1px dashed var(--ds-border-brand);
-  border-radius: 8px;
-  background-color: var(--brand-subtle);
-  color: var(--ds-text-brand);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-top: 4px;
-}
-
-.ing-add-card-btn:hover {
-  background-color: rgba(224, 112, 32, 0.12);
-  border-color: var(--ds-text-brand);
 }
 
 /* Step Editor: Ingredient Highlight Bar & Interactions */
@@ -2529,40 +2380,39 @@ header {
   background-color: var(--ds-background-app);
 }
 
+[data-theme="dark"] .ingredient-item-group {
+  background-color: #22272b;
+  border-color: #38414a;
+}
+
+[data-theme="dark"] .ingredient-item-group:focus-within {
+  border-color: var(--ds-border-brand);
+}
+
+[data-theme="dark"] .ingredient-item-header {
+  border-bottom-color: #38414a;
+}
+
+[data-theme="dark"] .ingredient-extra-row {
+  border-top-color: #38414a;
+}
+
+[data-theme="dark"] .ingredient-alts-box {
+  background-color: #181c20;
+  border-color: #38414a;
+}
+
 [data-theme="dark"] .ing-entry-card {
   background-color: #22272b;
   border-color: #38414a;
 }
 
-[data-theme="dark"] .recipe-ingredient-card,
 [data-theme="dark"] .recipe-step-card {
   border-left-color: #454f59;
 }
 
-[data-theme="dark"] .recipe-ingredient-card:focus-within,
 [data-theme="dark"] .recipe-step-card:focus-within {
   border-left-color: var(--ds-border-brand);
-}
-
-[data-theme="dark"] .ing-type-segmented {
-  background-color: #1c2127;
-  border-color: #38414a;
-}
-
-[data-theme="dark"] .ing-type-pill.active {
-  background-color: #2c333a;
-  color: var(--ds-text-brand);
-}
-
-[data-theme="dark"] .ing-alts-tray {
-  background-color: #181c20;
-  border-color: #38414a;
-}
-
-[data-theme="dark"] .ing-alt-input {
-  background-color: #22272b;
-  border-color: #38414a;
-  color: #c7d1db;
 }
 
 [data-theme="dark"] .step-highlight-bar {
