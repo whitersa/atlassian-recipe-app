@@ -900,6 +900,190 @@ function App() {
     }, 50);
   };
 
+  const wrapSelectionWithTag = (stepIdx, tagType = 'basic') => {
+    const textarea = document.getElementById(`step-textarea-${stepIdx}`);
+    if (!textarea) return;
+
+    const text = textarea.value || '';
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    if (start !== end) {
+      const selected = text.substring(start, end).trim();
+      if (!selected) return;
+      const prefix = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
+      const tagToInsert = `[${prefix}:${selected}]`;
+      const newText = text.substring(0, start) + tagToInsert + text.substring(end);
+      setNewRecipeSteps((prev) =>
+        prev.map((s, i) => (i === stepIdx ? { ...s, desc: newText } : s))
+      );
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start, start + tagToInsert.length);
+      }, 50);
+      pushAppToast({
+        title: `已高亮「${selected}」`,
+        description: `生成标记: ${tagToInsert}`,
+        tone: 'success',
+      });
+    } else {
+      pushAppToast({
+        title: '请先选中文本',
+        description: '在文本框中选中要高亮的食材文字后，点击此按钮即可快速添加高亮标记。',
+        tone: 'neutral',
+      });
+    }
+  };
+
+  const autoHighlightStepIngredients = (stepIdx) => {
+    const step = newRecipeSteps[stepIdx];
+    if (!step || !step.desc || !step.desc.trim()) {
+      pushAppToast({
+        title: '步骤描述为空',
+        description: '请先在该步骤文本框中输入烹饪过程文字。',
+        tone: 'neutral',
+      });
+      return;
+    }
+
+    const tokens = [];
+    newRecipeIngredients.forEach((ing) => {
+      const name = (ing.name || '').trim();
+      const type = ing.type || 'basic';
+      if (name) {
+        tokens.push({ name, type });
+      }
+      (ing.alternatives || []).forEach((alt) => {
+        const altName = (alt.name || '').trim();
+        if (altName) {
+          tokens.push({ name: altName, type: alt.type || type });
+        }
+      });
+    });
+
+    if (tokens.length === 0) {
+      pushAppToast({
+        title: '材料清单暂无食材',
+        description: '请先在上方「所需材料清单」中添加食材，以便智能识别并标记。',
+        tone: 'neutral',
+      });
+      return;
+    }
+
+    tokens.sort((a, b) => b.name.length - a.name.length);
+    let count = 0;
+    const matched = new Set();
+    let segments = step.desc.split(/(\[[^\]]+\])/g);
+
+    tokens.forEach((tok) => {
+      const prefix = tok.type === 'basic' ? '主' : tok.type === 'seasoning' ? '辅' : '香';
+      const tag = `[${prefix}:${tok.name}]`;
+      const newSegments = [];
+      segments.forEach((seg) => {
+        if (seg.startsWith('[') && seg.endsWith(']')) {
+          newSegments.push(seg);
+        } else if (seg.includes(tok.name)) {
+          const parts = seg.split(tok.name);
+          count += parts.length - 1;
+          matched.add(tok.name);
+          const replaced = parts.join(tag);
+          newSegments.push(...replaced.split(/(\[[^\]]+\])/g));
+        } else {
+          newSegments.push(seg);
+        }
+      });
+      segments = newSegments.filter((s) => s.length > 0);
+    });
+
+    if (count > 0) {
+      const newDesc = segments.join('');
+      setNewRecipeSteps((prev) =>
+        prev.map((s, i) => (i === stepIdx ? { ...s, desc: newDesc } : s))
+      );
+      pushAppToast({
+        title: `已智能高亮 ${count} 处食材`,
+        description: `标记项：${Array.from(matched).join('、')}`,
+        tone: 'success',
+      });
+    } else {
+      pushAppToast({
+        title: '未发现未标记食材',
+        description: '该步骤中出现的食材已高亮，或与材料清单名称暂不一致。',
+        tone: 'neutral',
+      });
+    }
+  };
+
+  const autoHighlightAllSteps = () => {
+    const tokens = [];
+    newRecipeIngredients.forEach((ing) => {
+      const name = (ing.name || '').trim();
+      const type = ing.type || 'basic';
+      if (name) {
+        tokens.push({ name, type });
+      }
+      (ing.alternatives || []).forEach((alt) => {
+        const altName = (alt.name || '').trim();
+        if (altName) {
+          tokens.push({ name: altName, type: alt.type || type });
+        }
+      });
+    });
+
+    if (tokens.length === 0) {
+      pushAppToast({
+        title: '材料清单暂无食材',
+        description: '请先在上方「所需材料清单」中添加食材，以便智能识别所有步骤。',
+        tone: 'neutral',
+      });
+      return;
+    }
+
+    tokens.sort((a, b) => b.name.length - a.name.length);
+    let totalCount = 0;
+    const allMatched = new Set();
+
+    const updatedSteps = newRecipeSteps.map((step) => {
+      if (!step.desc || !step.desc.trim()) return step;
+      let segments = step.desc.split(/(\[[^\]]+\])/g);
+      tokens.forEach((tok) => {
+        const prefix = tok.type === 'basic' ? '主' : tok.type === 'seasoning' ? '辅' : '香';
+        const tag = `[${prefix}:${tok.name}]`;
+        const newSegments = [];
+        segments.forEach((seg) => {
+          if (seg.startsWith('[') && seg.endsWith(']')) {
+            newSegments.push(seg);
+          } else if (seg.includes(tok.name)) {
+            const parts = seg.split(tok.name);
+            totalCount += parts.length - 1;
+            allMatched.add(tok.name);
+            const replaced = parts.join(tag);
+            newSegments.push(...replaced.split(/(\[[^\]]+\])/g));
+          } else {
+            newSegments.push(seg);
+          }
+        });
+        segments = newSegments.filter((s) => s.length > 0);
+      });
+      return { ...step, desc: segments.join('') };
+    });
+
+    if (totalCount > 0) {
+      setNewRecipeSteps(updatedSteps);
+      pushAppToast({
+        title: `全步骤已自动识别并高亮 ${totalCount} 处食材`,
+        description: `包含：${Array.from(allMatched).slice(0, 8).join('、')}${allMatched.size > 8 ? '等' : ''}`,
+        tone: 'success',
+      });
+    } else {
+      pushAppToast({
+        title: '未检测到未标记食材',
+        description: '所有步骤描述中的食材已全部标记，或暂无匹配项。',
+        tone: 'neutral',
+      });
+    }
+  };
+
   // Static ingredient items
   const ingredients = initialIngredients;
 
@@ -1014,6 +1198,7 @@ function App() {
   useEffect(() => {
     if (!isTimerRunning || initialRunSecondsRef.current <= 0) return undefined;
 
+    // eslint-disable-next-line react-hooks/purity
     const endAt = Date.now() + initialRunSecondsRef.current * 1000;
     const currentMeta = activeTimerMetaRef.current;
     let finished = false;
@@ -1766,156 +1951,239 @@ function App() {
                   </div>
                 </div>
 
-                {/* Dynamic Steps list (steps default to no timer; optional assistive timer blocks can be added on demand) */}
+                {/* Conventional Step Form Groups List */}
                 <div className="entry-form-group">
-                  <label className="entry-form-label">烹饪步骤</label>
-                  <div className="entry-form-row-group">
-                    {newRecipeSteps.map((step, idx) => (
-                      <div key={idx} className="ing-entry-card">
-                        <div className="dynamic-row">
-                          <input
-                            type="text"
-                            className="entry-form-input"
-                            placeholder={`步骤 ${idx + 1} 标题 (如: 豆腐焯水与准备)`}
-                            value={step.title}
-                            onChange={(e) => {
-                              setNewRecipeSteps((prev) =>
-                                prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s))
-                              );
-                            }}
-                            style={{ flex: 1 }}
-                          />
-                          {newRecipeSteps.length > 1 && (
-                            <button
-                              type="button"
-                              className="btn-row-action delete"
-                              aria-label="删除步骤"
-                              onClick={() => setNewRecipeSteps(newRecipeSteps.filter((_, i) => i !== idx))}
-                            >
-                              <X size={14} />
-                            </button>
-                          )}
-                        </div>
-                        {/* Quick Insert Pills (includes primary & alternative materials) */}
-                        {(() => {
-                          const insertTokens = [];
-                          newRecipeIngredients.forEach((ing) => {
-                            const tagType = ing.type || 'basic';
-                            if (ing.name.trim() !== '') {
-                              insertTokens.push({ name: ing.name.trim(), type: tagType, isAlt: false });
-                            }
-                            (ing.alternatives || []).forEach((alt) => {
-                              if (alt.name.trim() !== '') {
-                                insertTokens.push({
-                                  name: alt.name.trim(),
-                                  type: alt.type || tagType,
-                                  isAlt: true,
-                                });
-                              }
-                            });
-                          });
-                          if (insertTokens.length === 0) return null;
-                          return (
-                            <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '2px 0 4px 0' }}>
-                              <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
-                              {insertTokens.map((tok, i) => {
-                                const labelColor = tok.type === 'basic' ? '#d03e2d' : tok.type === 'seasoning' ? '#00875a' : '#6554c0';
-                                const bgColor = tok.type === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tok.type === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
-                                const typeLabel = tok.type === 'basic' ? '主' : tok.type === 'seasoning' ? '辅' : '香';
-                                return (
-                                  <button
-                                    key={`${tok.name}-${i}`}
-                                    type="button"
-                                    onClick={() => insertTagIntoStep(idx, tok.name, tok.type)}
-                                    className="category-chip"
-                                    style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
-                                  >
-                                    <span style={{ fontWeight: '700', color: labelColor }}>
-                                      {tok.isAlt ? `${typeLabel}·备` : typeLabel}
-                                    </span>
-                                    <span>{tok.name}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          );
-                        })()}
-                        <textarea
-                          id={`step-textarea-${idx}`}
-                          className="entry-form-textarea"
-                          placeholder="描述具体步骤，可用[材料名]来标记高亮（例如：放入[豆腐]翻炒）"
-                          value={step.desc}
-                          onChange={(e) => {
-                            setNewRecipeSteps((prev) =>
-                              prev.map((s, i) => (i === idx ? { ...s, desc: e.target.value } : s))
-                            );
-                          }}
-                          style={{ minHeight: '60px' }}
-                        />
+                  <div className="steps-section-header">
+                    <label className="entry-form-label" style={{ marginBottom: 0 }}>
+                      烹饪步骤 <span className="entry-form-required">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      className="step-magic-auto-btn all"
+                      onClick={autoHighlightAllSteps}
+                      title="根据上方食材清单，一键自动扫描并高亮所有步骤中的食材"
+                    >
+                      <Sparkles size={13} strokeWidth={2.2} /> 一键智能识别所有食材
+                    </button>
+                  </div>
 
-                        {/* Optional Assistive Timer Blocks for this step */}
-                        {(step.timers || []).length > 0 && (
-                          <div className="ing-alt-editor-list">
-                            {step.timers.map((tm, tIdx) => (
-                              <div key={tIdx} className="dynamic-row ing-alt-editor-row">
-                                <span className="ing-alt-badge">计时</span>
-                                <input
-                                  type="text"
-                                  className="entry-form-input"
-                                  placeholder="计时项，如：豆腐焯水 / 小火慢炖"
-                                  value={tm.label}
-                                  onChange={(e) =>
-                                    updateRecipeStepTimer(idx, tIdx, 'label', e.target.value)
-                                  }
-                                  style={{ flex: 2 }}
-                                />
-                                <input
-                                  type="number"
-                                  min="1"
-                                  className="entry-form-input"
-                                  placeholder="秒数，如：60"
-                                  value={tm.duration}
-                                  onChange={(e) =>
-                                    updateRecipeStepTimer(idx, tIdx, 'duration', e.target.value)
-                                  }
-                                  style={{ flex: 1.05 }}
-                                />
+                  <div className="step-groups-list">
+                    {newRecipeSteps.map((step, idx) => {
+                      const insertTokens = [];
+                      newRecipeIngredients.forEach((ing) => {
+                        const tagType = ing.type || 'basic';
+                        if (ing.name && ing.name.trim()) {
+                          insertTokens.push({ name: ing.name.trim(), type: tagType, isAlt: false });
+                        }
+                        (ing.alternatives || []).forEach((alt) => {
+                          if (alt.name && alt.name.trim()) {
+                            insertTokens.push({
+                              name: alt.name.trim(),
+                              type: alt.type || tagType,
+                              isAlt: true,
+                            });
+                          }
+                        });
+                      });
+
+                      return (
+                        <div key={idx} className="step-item-group">
+                          {/* 步骤项标题栏 */}
+                          <div className="step-item-header">
+                            <span className="step-badge-number">步骤 #{idx + 1}</span>
+                            <div className="step-item-header-actions">
+                              <button
+                                type="button"
+                                className="step-magic-auto-btn"
+                                onClick={() => autoHighlightStepIngredients(idx)}
+                                title="自动扫描本步描述并高亮已添加的食材"
+                              >
+                                <Sparkles size={12} strokeWidth={2.2} /> 智能识别食材
+                              </button>
+                              {newRecipeSteps.length > 1 && (
                                 <button
                                   type="button"
                                   className="btn-row-action delete"
-                                  aria-label="删除计时版块"
-                                  onClick={() => removeRecipeStepTimer(idx, tIdx)}
+                                  title="删除步骤"
+                                  aria-label="删除步骤"
+                                  onClick={() =>
+                                    setNewRecipeSteps(newRecipeSteps.filter((_, i) => i !== idx))
+                                  }
                                 >
-                                  <X size={13} />
+                                  <Trash2 size={13} />
                                 </button>
-                              </div>
-                            ))}
+                              )}
+                            </div>
                           </div>
-                        )}
 
-                        <div className="ing-entry-toolbar">
-                          <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)' }}>
-                            {(step.timers || []).length > 0
-                              ? `已标注 ${step.timers.length} 个辅助计时版块`
-                              : '常规步骤无需计时'}
-                          </span>
-                          <button
-                            type="button"
-                            className="ing-alt-add-btn"
-                            onClick={() => addRecipeStepTimer(idx)}
-                          >
-                            <Clock size={12} strokeWidth={2.5} /> 添加计时版块
-                          </button>
+                          {/* 步骤标题 (选填) */}
+                          <div className="entry-form-group" style={{ marginBottom: 0 }}>
+                            <label className="entry-form-label" style={{ fontSize: '12px' }}>
+                              步骤标题 (选填)
+                            </label>
+                            <input
+                              type="text"
+                              className="entry-form-input"
+                              placeholder="如：豆腐焯水与备料 / 调制酱汁"
+                              value={step.title}
+                              onChange={(e) =>
+                                setNewRecipeSteps((prev) =>
+                                  prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s))
+                                )
+                              }
+                            />
+                          </div>
+
+                          {/* 步骤描述与食材标记工具 */}
+                          <div className="entry-form-group" style={{ marginBottom: 0 }}>
+                            <div className="step-desc-label-row">
+                              <label className="entry-form-label" style={{ fontSize: '12px', marginBottom: 0 }}>
+                                步骤操作过程 <span className="entry-form-required">*</span>
+                              </label>
+                              <button
+                                type="button"
+                                className="step-pill-action-btn"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => wrapSelectionWithTag(idx)}
+                                title="在文本框中选中食材文字后点击此按钮快速包裹标记"
+                              >
+                                [ 选词高亮 ]
+                              </button>
+                            </div>
+
+                            {insertTokens.length > 0 && (
+                              <div className="step-quick-tags-scroller">
+                                <span className="step-quick-tags-label">点击插入食材:</span>
+                                {insertTokens.map((tok, i) => {
+                                  const labelColor =
+                                    tok.type === 'basic'
+                                      ? '#d03e2d'
+                                      : tok.type === 'seasoning'
+                                      ? '#00875a'
+                                      : '#6554c0';
+                                  const typeLabel =
+                                    tok.type === 'basic' ? '主' : tok.type === 'seasoning' ? '辅' : '香';
+                                  return (
+                                    <button
+                                      key={`${tok.name}-${i}`}
+                                      type="button"
+                                      className="step-quick-tag-chip"
+                                      onMouseDown={(e) => e.preventDefault()}
+                                      onClick={() => insertTagIntoStep(idx, tok.name, tok.type)}
+                                      title={`点击插入 [${typeLabel}:${tok.name}]`}
+                                    >
+                                      <span style={{ fontWeight: '700', color: labelColor }}>
+                                        {tok.isAlt ? `${typeLabel}·备` : typeLabel}
+                                      </span>
+                                      <span>{tok.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <textarea
+                              id={`step-textarea-${idx}`}
+                              className="entry-form-textarea"
+                              placeholder="描述具体烹饪操作，支持通过上方食材标签或中括号标记食材（例如：热油下入[主:豆腐]翻炒）"
+                              value={step.desc}
+                              onChange={(e) =>
+                                setNewRecipeSteps((prev) =>
+                                  prev.map((s, i) => (i === idx ? { ...s, desc: e.target.value } : s))
+                                )
+                              }
+                              rows={3}
+                            />
+
+                            {/* 实时高亮预览 */}
+                            {step.desc && step.desc.includes('[') && step.desc.includes(']') && (
+                              <div className="step-live-preview-box">
+                                <span className="step-live-preview-title">高亮预览：</span>
+                                <div className="step-live-preview-content">{renderStepText(step.desc)}</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 辅助计时器设置 */}
+                          {(step.timers || []).length > 0 && (
+                            <div className="step-timers-box">
+                              <div className="step-timers-header">本步骤辅助计时器：</div>
+                              {step.timers.map((tm, tIdx) => (
+                                <div key={tIdx} className="entry-form-row step-timer-row">
+                                  <div className="entry-form-group" style={{ flex: 1.5 }}>
+                                    <label
+                                      className="entry-form-label"
+                                      style={{ fontSize: '11.5px', color: 'var(--ds-text-subtle)' }}
+                                    >
+                                      计时事项
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="entry-form-input"
+                                      placeholder="例如：豆腐焯水 / 小火慢炖"
+                                      value={tm.label}
+                                      onChange={(e) =>
+                                        updateRecipeStepTimer(idx, tIdx, 'label', e.target.value)
+                                      }
+                                    />
+                                  </div>
+                                  <div className="entry-form-group" style={{ flex: 1 }}>
+                                    <label
+                                      className="entry-form-label"
+                                      style={{ fontSize: '11.5px', color: 'var(--ds-text-subtle)' }}
+                                    >
+                                      时长 (秒)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      className="entry-form-input"
+                                      placeholder="如：60"
+                                      value={tm.duration}
+                                      onChange={(e) =>
+                                        updateRecipeStepTimer(idx, tIdx, 'duration', e.target.value)
+                                      }
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="btn-row-action delete"
+                                    style={{ alignSelf: 'flex-end', marginBottom: '2px' }}
+                                    title="删除此计时器"
+                                    aria-label="删除此计时器"
+                                    onClick={() => removeRecipeStepTimer(idx, tIdx)}
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="step-footer-toolbar">
+                            <span className="step-footer-note">
+                              {(step.timers || []).length > 0
+                                ? `已配置 ${step.timers.length} 个辅助计时器`
+                                : '常规步骤无须计时'}
+                            </span>
+                            <button
+                              type="button"
+                              className="ingredient-add-alt-btn"
+                              onClick={() => addRecipeStepTimer(idx)}
+                            >
+                              <Clock size={12} strokeWidth={2.2} /> 添加计时器
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+
                     <button
                       type="button"
-                      className="recipe-link-btn"
+                      className="btn-add-step-item"
                       onClick={() => setNewRecipeSteps((prev) => [...prev, createEmptyStepEntry()])}
-                      style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
                     >
-                      <Plus size={12} strokeWidth={3} /> 添加下一个步骤
+                      <Plus size={15} strokeWidth={2.2} /> 添加步骤
                     </button>
                   </div>
                 </div>
