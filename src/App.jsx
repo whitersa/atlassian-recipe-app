@@ -45,6 +45,7 @@ import {
   ComponentInspectorPage,
   MobilePressCard,
   MobileToastRegion,
+  MobileSegmented,
   useToastQueue,
 } from './components';
 import {
@@ -1617,15 +1618,15 @@ function App() {
 
                 <div className="entry-form-group">
                   <label className="entry-form-label">烹饪难度</label>
-                  <select
-                    className="entry-form-select"
+                  <MobileSegmented
                     value={newRecipeDifficulty}
-                    onChange={(e) => setNewRecipeDifficulty(e.target.value)}
-                  >
-                    <option value="easy">极易上手</option>
-                    <option value="medium">中等难度</option>
-                    <option value="hard">困难挑战</option>
-                  </select>
+                    onChange={setNewRecipeDifficulty}
+                    items={[
+                      { value: 'easy', label: '极易上手' },
+                      { value: 'medium', label: '中等难度' },
+                      { value: 'hard', label: '困难挑战' },
+                    ]}
+                  />
                 </div>
 
                 <div className="entry-form-group">
