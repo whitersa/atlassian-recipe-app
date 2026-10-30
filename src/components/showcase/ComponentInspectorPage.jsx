@@ -19,6 +19,9 @@ import {
   inspectPwaNotificationCapabilities,
   requestTimerNotificationPermission,
   sendSystemTimerNotificationDetailed,
+  ensureWebPushSubscription,
+  scheduleCloudTimerPush,
+  cancelCloudTimerPush,
 } from '../../notifications';
 import { useMotionEnvironment } from '../motion/useReducedMotion';
 import { MotionList } from '../motion/MotionList';
@@ -1198,13 +1201,20 @@ function PwaNotificationLab({ pushToast }) {
     permission: 'default',
     swState: 'checking',
     hasWakeLock: false,
+    hasPushManager: false,
+    pushSubscribed: false,
+    pushEndpointHost: '',
+    apiAvailable: false,
+    serverVapidConfigured: false,
+    serverQstashConfigured: false,
   });
   const [countdown, setCountdown] = useState({ active: false, targetSec: 0, runId: 0 });
   const [remainingSec, setRemainingSec] = useState(0);
   const [labLog, setLabLog] = useState(
-    '苹果 iPhone 实测步骤：需在 HTTPS 下通过 Safari「分享 → 添加到主屏幕」从桌面图标启动，再依次点击「1. 请求通知权限」与下方触发按钮。'
+    '苹果 iPhone 锁屏实测：建议在 HTTPS 环境下，通过 Safari「分享 → 添加到主屏幕」从桌面打开，点击「订阅锁屏推送」后启动 15 秒锁屏实测。'
   );
   const audioCtxRef = useRef(null);
+  const scheduledCloudPushRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1406,19 +1416,64 @@ function PwaNotificationLab({ pushToast }) {
     });
   };
 
+  const handleSubscribePush = async () => {
+    const res = await ensureWebPushSubscription({ requestPermission: true });
+    const next = await inspectPwaNotificationCapabilities({ forceRemote: true });
+    setCaps(next);
+    if (res.ok) {
+      setLabLog(`✓ 锁屏推送已就绪：已绑定网关 ${res.endpointHost}，现在锁屏也能被云端准时唤醒！`);
+      pushToast({
+        title: '锁屏推送通道已建立',
+        description: `已成功连接 ${res.endpointHost}，锁屏或切后台均可亮屏通知。`,
+        tone: 'success',
+      });
+    } else {
+      setLabLog(`⚠ 锁屏推送订阅未完成：${res.reason}`);
+      pushToast({
+        title: '未能建立锁屏推送通道',
+        description: res.reason,
+        tone: 'warning',
+      });
+    }
+  };
+
   const handleStartCountdown = (seconds) => {
     ensureAudioContext();
     setRemainingSec(seconds);
     setCountdown((prev) => ({ active: true, targetSec: seconds, runId: prev.runId + 1 }));
-    setLabLog(
-      `已启动 ${seconds} 秒实测倒计时：现在可切回 iPhone 主屏幕或按下侧边锁屏键，实测苹果后台/锁屏处理机制。`
-    );
+
+    // Pre-schedule cloud push if Web Push subscription is available
+    if (caps.pushSubscribed) {
+      scheduleCloudTimerPush({
+        delaySeconds: seconds,
+        recipeTitle: '麻婆豆腐 · 实测',
+        timerLabel: `${seconds} 秒锁屏实测`,
+        stepTitle: '组件页触发',
+      }).then((res) => {
+        if (res.ok) {
+          scheduledCloudPushRef.current = res.messageId;
+          setLabLog(
+            `已启动 ${seconds} 秒实测（云端锁屏推送已托管：${res.endpointHost}）！现在请立即按下 iPhone 锁屏键，验证到点能否唤醒手机亮屏弹窗。`
+          );
+        } else {
+          setLabLog(`已启动 ${seconds} 秒倒计时（云端排期提示：${res.reason}）`);
+        }
+      });
+    } else {
+      setLabLog(
+        `已启动 ${seconds} 秒实测倒计时：现在可切回 iPhone 主屏幕或按下侧边锁屏键，实测苹果后台/锁屏处理机制。`
+      );
+    }
   };
 
   const handleCancelCountdown = () => {
+    if (scheduledCloudPushRef.current) {
+      cancelCloudTimerPush(scheduledCloudPushRef.current);
+      scheduledCloudPushRef.current = null;
+    }
     setCountdown((prev) => ({ ...prev, active: false }));
     setRemainingSec(0);
-    setLabLog('已手动取消实测倒计时。');
+    setLabLog('已手动取消实测倒计时与云端推送。');
   };
 
   const permissionBadge = !caps.hasNotificationApi
@@ -1537,6 +1592,37 @@ function PwaNotificationLab({ pushToast }) {
             {permissionBadge.text}
           </MobileStatusBadge>
         </div>
+
+        <div className="m-spec-card">
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ fontSize: 13, color: 'var(--ds-text)', display: 'block' }}>
+              5. Web Push 锁屏远程推送（Vercel + APNs）
+            </strong>
+            <span style={{ fontSize: 12, color: 'var(--ds-text-subtle)' }}>
+              {caps.pushSubscribed
+                ? `已订阅: ${caps.pushEndpointHost || '系统网关'} · QStash延时: ${
+                    caps.serverQstashConfigured ? '已配置' : '45s内直接托管'
+                  }`
+                : caps.apiAvailable
+                  ? caps.serverVapidConfigured
+                    ? '服务端 VAPID 已配置，点击下方按钮建立锁屏推送通道'
+                    : '服务端未检测到 VAPID 密钥，请在 Vercel 配置环境变量'
+                  : '未检测到 Vercel Serverless API（本地纯静态预览模式）'}
+            </span>
+          </div>
+          <MobileStatusBadge
+            tone={
+              caps.pushSubscribed
+                ? 'success'
+                : caps.serverVapidConfigured
+                  ? 'brand'
+                  : 'neutral'
+            }
+            appearance="soft"
+          >
+            {caps.pushSubscribed ? '锁屏推送已就绪' : caps.serverVapidConfigured ? '待订阅' : '未就绪'}
+          </MobileStatusBadge>
+        </div>
       </div>
 
       <div className="m-subhead">分步实测动作（iOS 必须在点击手势中触发）</div>
@@ -1550,11 +1636,19 @@ function PwaNotificationLab({ pushToast }) {
         </MobileButton>
 
         <MobileButton
+          variant={caps.pushSubscribed ? 'secondary' : 'primary'}
+          icon={<Share2 size={15} strokeWidth={2.2} />}
+          onClick={handleSubscribePush}
+        >
+          {caps.pushSubscribed ? '重新订阅锁屏推送' : '订阅锁屏推送'}
+        </MobileButton>
+
+        <MobileButton
           variant="secondary"
           icon={<Sparkles size={15} strokeWidth={2.2} />}
           onClick={handleImmediateNotify}
         >
-          2. 立即发系统通知
+          立即发通知
         </MobileButton>
 
         <MobileButton
@@ -1570,7 +1664,7 @@ function PwaNotificationLab({ pushToast }) {
           icon={<Clock size={15} strokeWidth={2.2} />}
           onClick={() => handleStartCountdown(15)}
         >
-          15 秒切后台/锁屏
+          15 秒锁屏实测
         </MobileButton>
       </div>
 
