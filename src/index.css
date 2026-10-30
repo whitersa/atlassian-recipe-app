@@ -471,6 +471,7 @@ header {
   transform: translateY(100%) translateZ(0);
   transition: transform var(--duration-normal) var(--ease-enter);
   isolation: isolate;
+  margin-bottom: var(--keyboard-offset, 0px);
 }
 
 .recipe-modal.active .modal-content-container {
@@ -553,12 +554,13 @@ header {
 /* Form Entry Modal (Ingredient & Recipe) */
 .form-modal-container {
   height: auto;
-  max-height: 90vh;
-  max-height: 90dvh;
+  max-height: calc(90dvh - var(--keyboard-offset, 0px));
+  max-height: calc(90vh - var(--keyboard-offset, 0px));
 }
 
 .form-modal-body {
   padding: var(--spacing-md) var(--spacing-md) calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
+  overscroll-behavior: contain;
 }
 
 /* Cover section */

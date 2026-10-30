@@ -37,7 +37,9 @@ import {
   Leaf,
   Download,
   Upload,
-  Layers
+  Layers,
+  Settings,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ComponentInspectorPage,
@@ -52,6 +54,7 @@ import {
   cancelCloudTimerPush,
   acquireCookingWakeLock,
   releaseCookingWakeLock,
+  forceCheckAndApplyAppUpdate,
 } from './notifications';
 
 // Mock Database of Recipes (Chinese Cuisine Focus)
@@ -394,16 +397,22 @@ function App() {
   // Workplace mode state (default to true)
   const [workplaceMode, setWorkplaceMode] = useState(true);
 
-  // Tab navigation state ('recipes', 'ingredients', or 'components')
+  // Tab navigation state ('recipes', 'ingredients', or 'settings')
   const [currentTab, setCurrentTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('view') === 'components' || window.location.hash === '#components') {
-      return 'components';
+    if (params.get('view') === 'settings' || params.get('view') === 'components' || window.location.hash === '#settings' || window.location.hash === '#components') {
+      return 'settings';
     }
     if (params.get('view') === 'ingredients') {
       return 'ingredients';
     }
     return 'recipes';
+  });
+
+  // Settings sub-view state (null for Settings Home, 'inspector' for Component Inspector page)
+  const [settingsSubView, setSettingsSubView] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('view') === 'components' || window.location.hash === '#components' ? 'inspector' : null;
   });
 
   // Entry form modal visibility
@@ -478,6 +487,39 @@ function App() {
   const fileInputRef = useRef(null);
   const [dataMessage, setDataMessage] = useState('');
   const [dataMessageType, setDataMessageType] = useState('success'); // 'success' | 'error'
+  const [isUpdatingApp, setIsUpdatingApp] = useState(false);
+
+  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.2.0';
+  const appBuildTime = typeof __BUILD_TIME__ !== 'undefined' ? new Date(__BUILD_TIME__).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '最新构建';
+
+  const handleUpdateApp = async () => {
+    if (isUpdatingApp) return;
+    setIsUpdatingApp(true);
+    pushAppToast({
+      title: '正在检查并拉取最新资源...',
+      description: '正在连接服务器更新 Service Worker 并刷新静态缓存。',
+      tone: 'brand',
+    });
+
+    try {
+      await forceCheckAndApplyAppUpdate();
+      pushAppToast({
+        title: '更新成功，正在应用新版本',
+        description: '页面即将自动刷新载入全部新资源。',
+        tone: 'success',
+      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    } catch (err) {
+      setIsUpdatingApp(false);
+      pushAppToast({
+        title: '更新检查失败',
+        description: err?.message || '网络连接超时，请稍后重试',
+        tone: 'danger',
+      });
+    }
+  };
 
   const handleExportData = () => {
     const exportPayload = {
@@ -870,11 +912,19 @@ function App() {
     setCurrentTab(tab);
     setSearchQuery('');
     setSelectedMaterialType(null); // Reset sub-view state
+    if (tab !== 'settings') {
+      setSettingsSubView(null);
+    }
     const url = new URL(window.location.href);
-    if (tab === 'components') {
-      url.searchParams.set('view', 'components');
+    if (tab === 'settings') {
+      url.searchParams.set('view', 'settings');
+      url.hash = '';
+    } else if (tab === 'ingredients') {
+      url.searchParams.set('view', 'ingredients');
+      url.hash = '';
     } else {
       url.searchParams.delete('view');
+      url.hash = '';
     }
     window.history.replaceState({}, '', url);
   };
@@ -1343,71 +1393,20 @@ function App() {
                 </div>
               </div>
 
-              {/* Group 2: Workbenches / Entry Tools */}
-              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>录入与管理工具</h3>
-              <div className="portal-action-row">
-                {/* Card 3: Enter Ingredient */}
-                <div className="portal-card action-card" onClick={openIngredientForm}>
-                  <div className="action-card-content">
-                    <div className="portal-card-icon-wrapper entry-ing">
-                      <Plus size={20} strokeWidth={2.5} />
+              {/* Group 2: Quick Entry Action */}
+              <div style={{ marginTop: 'var(--spacing-md)' }}>
+                <div className="portal-action-row">
+                  <div className="portal-card action-card" onClick={openIngredientForm}>
+                    <div className="action-card-content">
+                      <div className="portal-card-icon-wrapper entry-ing">
+                        <Plus size={20} strokeWidth={2.5} />
+                      </div>
+                      <span className="action-card-title">快速录入食材</span>
+                      <span className="action-card-count">已录入 {Math.max(0, ingredientLibraryList.length - 20)} 种材料</span>
                     </div>
-                    <span className="action-card-title">录入食材</span>
-                    <span className="action-card-count">已录入 {Math.max(0, ingredientLibraryList.length - 20)} 种</span>
-                  </div>
-                </div>
-
-                {/* Card 4: Enter Recipe */}
-                <div className="portal-card action-card" onClick={openRecipeForm}>
-                  <div className="action-card-content">
-                    <div className="portal-card-icon-wrapper entry-rec">
-                      <ChefHat size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="action-card-title">录入菜谱</span>
-                    <span className="action-card-count">私房菜谱 {recipesList.filter(r => r.chef === '自定义录入').length} 道</span>
                   </div>
                 </div>
               </div>
-
-              {/* Group 3: Data Management */}
-              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>数据管理</h3>
-              {dataMessage && (
-                <div className={`form-message-banner ${dataMessageType === 'error' ? 'error' : ''}`} style={{ marginBottom: 'var(--spacing-sm)' }}>
-                  {dataMessage}
-                </div>
-              )}
-              <div className="portal-action-row">
-                {/* Export */}
-                <div className="portal-card action-card" onClick={handleExportData}>
-                  <div className="action-card-content">
-                    <div className="portal-card-icon-wrapper data-export">
-                      <Download size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="action-card-title">导出备份</span>
-                    <span className="action-card-count">v{DATA_VERSION} · JSON 格式</span>
-                  </div>
-                </div>
-
-                {/* Import */}
-                <div className="portal-card action-card" onClick={() => fileInputRef.current?.click()}>
-                  <div className="action-card-content">
-                    <div className="portal-card-icon-wrapper data-import">
-                      <Upload size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="action-card-title">导入恢复</span>
-                    <span className="action-card-count">支持版本迁移</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hidden file input for import */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                style={{ display: 'none' }}
-                onChange={handleImportData}
-              />
             </div>
           ) : (
             /* Sub-views */
@@ -2274,7 +2273,177 @@ function App() {
         </div>
       )}
 
-      {currentTab === 'components' && <ComponentInspectorPage />}
+      {/* Tab 3: System Settings & Workbench */}
+      {currentTab === 'settings' && (
+        <div className="subview-container">
+          {settingsSubView === 'inspector' ? (
+            <div>
+              <div className="subview-header" style={{ paddingInline: 'var(--spacing-md)' }}>
+                <button
+                  type="button"
+                  className="btn-back"
+                  onClick={() => setSettingsSubView(null)}
+                  title="返回系统设置"
+                >
+                  <ArrowLeft size={18} strokeWidth={2.5} />
+                </button>
+                <div className="subview-title-group">
+                  <h2 className="subview-title">组件规范与实测台</h2>
+                  <span className="subview-subtitle">移动端手势按压、时序动画与系统通知</span>
+                </div>
+              </div>
+              <ComponentInspectorPage />
+            </div>
+          ) : (
+            <div className="portal-container" style={{ paddingTop: 'var(--spacing-xs)' }}>
+              {/* Group 1: Recipe & Ingredient Entry Workbenches */}
+              <h3 className="portal-section-title">录入工作台</h3>
+              <div className="portal-action-row">
+                <div className="portal-card action-card" onClick={openRecipeForm}>
+                  <div className="action-card-content">
+                    <div className="portal-card-icon-wrapper entry-rec">
+                      <ChefHat size={20} strokeWidth={2.5} />
+                    </div>
+                    <span className="action-card-title">录入菜谱</span>
+                    <span className="action-card-count">
+                      已录入 {recipesList.filter((r) => r.chef === '自定义录入').length} 道私房菜
+                    </span>
+                  </div>
+                </div>
+
+                <div className="portal-card action-card" onClick={openIngredientForm}>
+                  <div className="action-card-content">
+                    <div className="portal-card-icon-wrapper entry-ing">
+                      <Plus size={20} strokeWidth={2.5} />
+                    </div>
+                    <span className="action-card-title">录入食材</span>
+                    <span className="action-card-count">
+                      已扩展 {Math.max(0, ingredientLibraryList.length - 20)} 种材料
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Group 2: Data Backup & Migration */}
+              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>
+                数据备份与迁移
+              </h3>
+              {dataMessage && (
+                <div
+                  className={`form-message-banner ${dataMessageType === 'error' ? 'error' : ''}`}
+                  style={{ marginBottom: 'var(--spacing-sm)' }}
+                >
+                  {dataMessage}
+                </div>
+              )}
+              <div className="portal-action-row">
+                <div className="portal-card action-card" onClick={handleExportData}>
+                  <div className="action-card-content">
+                    <div className="portal-card-icon-wrapper data-export">
+                      <Download size={20} strokeWidth={2.5} />
+                    </div>
+                    <span className="action-card-title">导出备份</span>
+                    <span className="action-card-count">v{DATA_VERSION} · JSON 格式</span>
+                  </div>
+                </div>
+
+                <div className="portal-card action-card" onClick={() => fileInputRef.current?.click()}>
+                  <div className="action-card-content">
+                    <div className="portal-card-icon-wrapper data-import">
+                      <Upload size={20} strokeWidth={2.5} />
+                    </div>
+                    <span className="action-card-title">导入恢复</span>
+                    <span className="action-card-count">全自动版本迁移</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hidden file input for import */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: 'none' }}
+                onChange={handleImportData}
+              />
+
+              {/* Group 3: App Version & Remote Update */}
+              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>
+                版本与系统更新
+              </h3>
+              <div
+                className="portal-card"
+                onClick={handleUpdateApp}
+                style={{ cursor: isUpdatingApp ? 'progress' : 'pointer' }}
+              >
+                <div className="portal-card-main">
+                  <div
+                    className="portal-card-icon-wrapper"
+                    style={{
+                      backgroundColor: 'var(--brand-subtle)',
+                      color: 'var(--ds-text-brand)',
+                    }}
+                  >
+                    <RefreshCw
+                      size={20}
+                      strokeWidth={2.5}
+                      style={{ animation: isUpdatingApp ? 'm-spin 900ms linear infinite' : 'none' }}
+                    />
+                  </div>
+                  <div className="portal-card-info">
+                    <h3 className="portal-card-title">
+                      {isUpdatingApp ? '正在检查并更新应用...' : '检查并拉取最新资源'}
+                    </h3>
+                    <p className="portal-card-desc">
+                      刷新 Service Worker 与静态缓存，免退出直接载入最新功能
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-status-filter active"
+                    style={{ padding: '4px 10px', fontSize: '12px', flexShrink: 0, height: '30px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateApp();
+                    }}
+                  >
+                    {isUpdatingApp ? '更新中' : '立即更新'}
+                  </button>
+                </div>
+                <div className="portal-card-footer">
+                  <span>当前版本: <strong>v{appVersion}</strong>（构建于 {appBuildTime}）</span>
+                </div>
+              </div>
+
+              {/* Group 4: Design Specs & Lab Entry */}
+              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>
+                开发者与规范工具
+              </h3>
+              <div
+                className="portal-card"
+                onClick={() => setSettingsSubView('inspector')}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="portal-card-main">
+                  <div className="portal-card-icon-wrapper" style={{ backgroundColor: 'var(--brand-subtle)', color: 'var(--ds-text-brand)' }}>
+                    <Layers size={22} strokeWidth={2.5} />
+                  </div>
+                  <div className="portal-card-info">
+                    <h3 className="portal-card-title">组件检查台与 PWA 实测</h3>
+                    <p className="portal-card-desc">
+                      时序动画、表面分离、三档密度与 iOS 锁屏 Web Push 诊断实测
+                    </p>
+                  </div>
+                  <ChevronRight size={18} className="portal-card-chevron" />
+                </div>
+                <div className="portal-card-footer">
+                  <span>点击进入独立设计检查台</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Top-Anchored Mobile Notification Region for Assistive Timers */}
       <MobileToastRegion toasts={appToasts} onDismiss={dismissAppToast} placement="top" />
@@ -2296,11 +2465,11 @@ function App() {
           <span className="bottom-nav-label">常用食材</span>
         </button>
         <button 
-          className={`bottom-nav-item ${currentTab === 'components' ? 'active' : ''}`}
-          onClick={() => handleTabChange('components')}
+          className={`bottom-nav-item ${currentTab === 'settings' ? 'active' : ''}`}
+          onClick={() => handleTabChange('settings')}
         >
-          <Layers className="bottom-nav-icon" size={20} strokeWidth={2.5} />
-          <span className="bottom-nav-label">组件检查</span>
+          <Settings className="bottom-nav-icon" size={20} strokeWidth={2.5} />
+          <span className="bottom-nav-label">系统设置</span>
         </button>
       </nav>
     </div>

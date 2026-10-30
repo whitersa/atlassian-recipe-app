@@ -70,6 +70,48 @@ export function registerPwaServiceWorker() {
   }
 }
 
+/**
+ * Checks for PWA updates, activates new service worker, clears HTTP/asset caches,
+ * and force-reloads the page to get the latest bundle without closing the browser.
+ */
+export async function forceCheckAndApplyAppUpdate() {
+  if (typeof window === 'undefined') {
+    return { ok: false, reason: '非浏览器环境' };
+  }
+
+  let swUpdated = false;
+
+  // 1. Service Worker update check & skip waiting
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        await reg.update();
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          swUpdated = true;
+        } else if (reg.installing) {
+          swUpdated = true;
+        }
+      }
+    } catch (err) {
+      console.warn('SW update check error:', err);
+    }
+  }
+
+  // 2. Clear all Service Worker / Browser CacheStorage caches
+  if ('caches' in window) {
+    try {
+      const cacheNames = await window.caches.keys();
+      await Promise.all(cacheNames.map((name) => window.caches.delete(name)));
+    } catch (err) {
+      console.warn('Cache clear error:', err);
+    }
+  }
+
+  return { ok: true, swUpdated };
+}
+
 export function isStandalonePwa() {
   if (typeof window === 'undefined') return false;
   return (

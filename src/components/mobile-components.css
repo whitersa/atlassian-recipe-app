@@ -1750,9 +1750,11 @@
 }
 
 .m-spec-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .m-spec-card {
@@ -1763,7 +1765,40 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.m-spec-card > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.m-spec-card > div:first-child span {
+  display: block;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.m-spec-card > .m-status-badge,
+.m-spec-card > code {
+  flex-shrink: 0;
+}
+
+@media (max-width: 420px) {
+  .m-spec-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .m-spec-card > .m-status-badge,
+  .m-spec-card > code {
+    align-self: flex-start;
+  }
 }
 
 .m-spec-card code {
