@@ -42,4 +42,32 @@ export default [
       },
     },
   },
+  {
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.es2020,
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
+  {
+    files: ['public/sw.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'script',
+      globals: {
+        ...globals.serviceworker,
+        ...globals.es2020,
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
 ]
