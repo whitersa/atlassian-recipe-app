@@ -2321,6 +2321,180 @@ header {
   border-color: var(--ds-text-brand);
 }
 
+/* Step Editor: Ingredient Highlight Bar & Interactions */
+.step-auto-magic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ds-text-brand);
+  background-color: var(--brand-subtle);
+  border: 1px solid var(--ds-border-brand);
+  padding: 3px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.step-auto-magic-btn:hover {
+  background-color: rgba(224, 112, 32, 0.15);
+  transform: translateY(-1px);
+}
+
+.recipe-step-card {
+  position: relative;
+  border-left: 3px solid var(--ds-border);
+}
+
+.recipe-step-card:focus-within {
+  border-left-color: var(--ds-border-brand);
+  box-shadow: 0 2px 6px rgba(224, 112, 32, 0.08);
+}
+
+.step-title-input {
+  flex: 1;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  border-radius: 5px !important;
+  border: 1px solid var(--ds-border) !important;
+  background-color: var(--ds-background-input) !important;
+}
+
+.step-highlight-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background-color: var(--ds-background-neutral);
+  border: 1px solid var(--ds-border);
+}
+
+.step-highlight-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.step-bar-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ds-text-subtle);
+}
+
+.step-action-btns-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.step-action-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.step-action-pill-btn.auto-detect {
+  background-color: var(--brand-subtle);
+  color: var(--ds-text-brand);
+  border: 1px solid var(--ds-border-brand);
+}
+
+.step-action-pill-btn.auto-detect:hover {
+  background-color: rgba(224, 112, 32, 0.16);
+}
+
+.step-action-pill-btn.selection-tag {
+  background-color: var(--ds-background-default);
+  color: var(--ds-text);
+  border: 1px solid var(--ds-border);
+}
+
+.step-action-pill-btn.selection-tag:hover {
+  border-color: var(--ds-text-subtle);
+  background-color: var(--ds-background-neutral-hover);
+}
+
+.step-quick-chips-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 3px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.step-chips-hint {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ds-text-subtle);
+  flex-shrink: 0;
+}
+
+.step-insert-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--ds-border);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--ds-text);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.step-insert-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.step-insert-chip .chip-type-tag {
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.step-live-preview-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: var(--ds-background-neutral);
+  border-left: 3px solid var(--ds-border-brand);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ds-text);
+  margin-top: 2px;
+}
+
+.step-live-preview-box .preview-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ds-text-subtle);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-live-preview-box .preview-text-rendered {
+  flex: 1;
+  word-break: break-word;
+}
+
 /* Dark Mode Overrides */
 [data-theme="dark"] .entry-form-row-group {
   background-color: var(--ds-background-app);
@@ -2331,11 +2505,13 @@ header {
   border-color: #38414a;
 }
 
-[data-theme="dark"] .recipe-ingredient-card {
+[data-theme="dark"] .recipe-ingredient-card,
+[data-theme="dark"] .recipe-step-card {
   border-left-color: #454f59;
 }
 
-[data-theme="dark"] .recipe-ingredient-card:focus-within {
+[data-theme="dark"] .recipe-ingredient-card:focus-within,
+[data-theme="dark"] .recipe-step-card:focus-within {
   border-left-color: var(--ds-border-brand);
 }
 
@@ -2358,6 +2534,25 @@ header {
   background-color: #22272b;
   border-color: #38414a;
   color: #c7d1db;
+}
+
+[data-theme="dark"] .step-highlight-bar {
+  background-color: #1c2127;
+  border-color: #38414a;
+}
+
+[data-theme="dark"] .step-action-pill-btn.selection-tag {
+  background-color: #22272b;
+  border-color: #38414a;
+  color: #c7d1db;
+}
+
+[data-theme="dark"] .step-insert-chip {
+  border-color: #38414a;
+}
+
+[data-theme="dark"] .step-live-preview-box {
+  background-color: #181c20;
 }
 
 .btn-row-action {
