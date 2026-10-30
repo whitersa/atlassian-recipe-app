@@ -39,6 +39,7 @@ import {
   Upload,
   Layers,
   Settings,
+  RefreshCw,
 } from 'lucide-react';
 import {
   ComponentInspectorPage,
@@ -53,6 +54,7 @@ import {
   cancelCloudTimerPush,
   acquireCookingWakeLock,
   releaseCookingWakeLock,
+  forceCheckAndApplyAppUpdate,
 } from './notifications';
 
 // Mock Database of Recipes (Chinese Cuisine Focus)
@@ -485,6 +487,39 @@ function App() {
   const fileInputRef = useRef(null);
   const [dataMessage, setDataMessage] = useState('');
   const [dataMessageType, setDataMessageType] = useState('success'); // 'success' | 'error'
+  const [isUpdatingApp, setIsUpdatingApp] = useState(false);
+
+  const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.2.0';
+  const appBuildTime = typeof __BUILD_TIME__ !== 'undefined' ? new Date(__BUILD_TIME__).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '最新构建';
+
+  const handleUpdateApp = async () => {
+    if (isUpdatingApp) return;
+    setIsUpdatingApp(true);
+    pushAppToast({
+      title: '正在检查并拉取最新资源...',
+      description: '正在连接服务器更新 Service Worker 并刷新静态缓存。',
+      tone: 'brand',
+    });
+
+    try {
+      await forceCheckAndApplyAppUpdate();
+      pushAppToast({
+        title: '更新成功，正在应用新版本',
+        description: '页面即将自动刷新载入全部新资源。',
+        tone: 'success',
+      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 600);
+    } catch (err) {
+      setIsUpdatingApp(false);
+      pushAppToast({
+        title: '更新检查失败',
+        description: err?.message || '网络连接超时，请稍后重试',
+        tone: 'danger',
+      });
+    }
+  };
 
   const handleExportData = () => {
     const exportPayload = {
@@ -2332,7 +2367,55 @@ function App() {
                 onChange={handleImportData}
               />
 
-              {/* Group 3: Design Specs & Lab Entry */}
+              {/* Group 3: App Version & Remote Update */}
+              <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>
+                版本与系统更新
+              </h3>
+              <div
+                className="portal-card"
+                onClick={handleUpdateApp}
+                style={{ cursor: isUpdatingApp ? 'progress' : 'pointer' }}
+              >
+                <div className="portal-card-main">
+                  <div
+                    className="portal-card-icon-wrapper"
+                    style={{
+                      backgroundColor: 'var(--brand-subtle)',
+                      color: 'var(--ds-text-brand)',
+                    }}
+                  >
+                    <RefreshCw
+                      size={20}
+                      strokeWidth={2.5}
+                      style={{ animation: isUpdatingApp ? 'm-spin 900ms linear infinite' : 'none' }}
+                    />
+                  </div>
+                  <div className="portal-card-info">
+                    <h3 className="portal-card-title">
+                      {isUpdatingApp ? '正在检查并更新应用...' : '检查并拉取最新资源'}
+                    </h3>
+                    <p className="portal-card-desc">
+                      刷新 Service Worker 与静态缓存，免退出直接载入最新功能
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-status-filter active"
+                    style={{ padding: '4px 10px', fontSize: '12px', flexShrink: 0, height: '30px' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateApp();
+                    }}
+                  >
+                    {isUpdatingApp ? '更新中' : '立即更新'}
+                  </button>
+                </div>
+                <div className="portal-card-footer">
+                  <span>当前版本: <strong>v{appVersion}</strong>（构建于 {appBuildTime}）</span>
+                </div>
+              </div>
+
+              {/* Group 4: Design Specs & Lab Entry */}
               <h3 className="portal-section-title" style={{ marginTop: 'var(--spacing-md)' }}>
                 开发者与规范工具
               </h3>

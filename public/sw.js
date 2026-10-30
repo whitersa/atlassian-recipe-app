@@ -41,6 +41,10 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('message', (event) => {
   const payload = event.data;
+  if (payload && payload.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
   if (payload && payload.type === 'SHOW_TIMER_NOTIFICATION' && payload.title) {
     event.waitUntil(self.registration.showNotification(payload.title, payload.options || {}));
   }
