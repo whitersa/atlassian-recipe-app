@@ -143,17 +143,22 @@ header {
   width: 100%;
   padding: 10px 12px 10px 36px;
   border-radius: var(--radius-sm);
-  border: 2px solid var(--ds-border);
+  border: 1px solid var(--ds-border-input);
   background-color: var(--ds-background-input);
   color: var(--ds-text);
   font-size: var(--font-size-base);
   outline: none;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search-input:hover {
+  border-color: hsl(215, 18%, 80%);
 }
 
 .search-input:focus {
-  border-color: var(--ds-border-focus);
+  border-color: var(--ds-border-brand);
   background-color: var(--ds-background-default);
+  box-shadow: 0 0 0 2px var(--brand-subtle);
 }
 
 .search-icon {
@@ -1975,19 +1980,24 @@ header {
 .entry-form-input, .entry-form-select, .entry-form-textarea {
   width: 100%;
   padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--ds-border);
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--ds-border-input);
   background-color: var(--ds-background-input);
   color: var(--ds-text);
   font-size: 14px;
   outline: none;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
 }
 
+.entry-form-input:hover, .entry-form-select:hover, .entry-form-textarea:hover {
+  border-color: hsl(215, 18%, 80%);
+}
+
 .entry-form-input:focus, .entry-form-select:focus, .entry-form-textarea:focus {
-  border-color: var(--ds-border-focus);
+  border-color: var(--ds-border-brand);
   background-color: var(--ds-background-default);
+  box-shadow: 0 0 0 2px var(--brand-subtle);
 }
 
 .entry-form-textarea {
@@ -2151,9 +2161,13 @@ header {
   padding: 7px 10px;
   font-size: 13.5px;
   border-radius: 6px;
-  border: 1px solid var(--ds-border);
+  border: 1px solid var(--ds-border-input);
   background-color: var(--ds-background-input);
   box-sizing: border-box;
+}
+
+.ing-card-inputs-grid .entry-form-input.ing-input:hover {
+  border-color: hsl(215, 18%, 80%);
 }
 
 .ing-card-inputs-grid .entry-form-input.ing-input:focus {
@@ -2262,10 +2276,14 @@ header {
   padding: 6px 8px;
   font-size: 12.5px;
   border-radius: 5px;
-  border: 1px solid var(--ds-border);
+  border: 1px solid var(--ds-border-input);
   background-color: var(--ds-background-default);
   color: var(--ds-text);
   box-sizing: border-box;
+}
+
+.ing-alt-input:hover {
+  border-color: hsl(215, 18%, 80%);
 }
 
 .ing-alt-input.amount {
@@ -2275,6 +2293,7 @@ header {
 .ing-alt-input:focus {
   border-color: var(--ds-border-brand);
   outline: none;
+  box-shadow: 0 0 0 2px var(--brand-subtle);
 }
 
 .ing-alt-del-btn {
@@ -2357,8 +2376,18 @@ header {
   padding: 6px 10px !important;
   font-size: 13px !important;
   border-radius: 5px !important;
-  border: 1px solid var(--ds-border) !important;
+  border: 1px solid var(--ds-border-input) !important;
   background-color: var(--ds-background-input) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.step-title-input:hover {
+  border-color: hsl(215, 18%, 80%) !important;
+}
+
+.step-title-input:focus {
+  border-color: var(--ds-border-brand) !important;
+  box-shadow: 0 0 0 2px var(--brand-subtle) !important;
 }
 
 .step-highlight-bar {
@@ -2553,6 +2582,22 @@ header {
 
 [data-theme="dark"] .step-live-preview-box {
   background-color: #181c20;
+}
+
+[data-theme="dark"] .entry-form-input,
+[data-theme="dark"] .entry-form-select,
+[data-theme="dark"] .entry-form-textarea,
+[data-theme="dark"] .search-input,
+[data-theme="dark"] .step-title-input {
+  border-color: var(--ds-border-input);
+}
+
+[data-theme="dark"] .entry-form-input:hover,
+[data-theme="dark"] .entry-form-select:hover,
+[data-theme="dark"] .entry-form-textarea:hover,
+[data-theme="dark"] .search-input:hover,
+[data-theme="dark"] .step-title-input:hover {
+  border-color: hsl(215, 15%, 38%) !important;
 }
 
 .btn-row-action {

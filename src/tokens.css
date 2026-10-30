@@ -127,6 +127,7 @@
   --ds-text-inverse:             var(--neutral-surface);
 
   --ds-border:                   var(--neutral-border);
+  --ds-border-input:             hsl(215, 16%, 89%);
   --ds-border-brand:             var(--brand-base);
   --ds-border-focus:             hsl(14, 85%, 65%);
 
@@ -205,6 +206,7 @@
   --ds-text-inverse:             var(--neutral-app);
 
   --ds-border:                   var(--neutral-border);
+  --ds-border-input:             hsl(215, 15%, 26%);
   --ds-border-brand:             var(--brand-base);
   --ds-border-focus:             hsl(14, 85%, 75%);
 
