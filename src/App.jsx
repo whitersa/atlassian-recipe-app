@@ -21,7 +21,6 @@ import {
   Moon, 
   Search, 
   Clock, 
-  Flame, 
   X, 
   Play, 
   Pause, 
@@ -69,8 +68,7 @@ const recipes = [
     image: 'assets/tofu.png',
     difficulty: 'medium',
     difficultyLabel: '中等难度',
-    prepTime: 10,
-    cookTime: 12,
+    totalTime: 25,
     calories: 350,
     tags: ['麻辣', '豆腐'],
     tagClasses: ['lozenge-red', 'lozenge-default'],
@@ -144,8 +142,7 @@ const recipes = [
     image: 'assets/chicken.png',
     difficulty: 'medium',
     difficultyLabel: '中等难度',
-    prepTime: 15,
-    cookTime: 8,
+    totalTime: 25,
     calories: 450,
     tags: ['酸甜微辣', '鸡肉'],
     tagClasses: ['lozenge-orange', 'lozenge-default'],
@@ -205,8 +202,7 @@ const recipes = [
     image: 'assets/eggs.png',
     difficulty: 'easy',
     difficultyLabel: '极易上手',
-    prepTime: 5,
-    cookTime: 6,
+    totalTime: 12,
     calories: 220,
     tags: ['酸甜', '鸡蛋'],
     tagClasses: ['lozenge-green', 'lozenge-default'],
@@ -477,8 +473,7 @@ function App() {
   const [newRecipeTitle, setNewRecipeTitle] = useState('');
   const [newRecipeCategory, setNewRecipeCategory] = useState('lunch');
   const [newRecipeDesc, setNewRecipeDesc] = useState('');
-  const [newRecipePrepTime, setNewRecipePrepTime] = useState('');
-  const [newRecipeCookTime, setNewRecipeCookTime] = useState('');
+  const [newRecipeTotalTime, setNewRecipeTotalTime] = useState('');
   const [newRecipeDifficulty, setNewRecipeDifficulty] = useState('medium');
   const [newRecipeIngredients, setNewRecipeIngredients] = useState(() => [createEmptyIngredientEntry()]);
   const [newRecipeSteps, setNewRecipeSteps] = useState(() => [createEmptyStepEntry()]);
@@ -739,8 +734,7 @@ function App() {
       image: 'assets/eggs.png', // Fallback cover image
       difficulty: newRecipeDifficulty,
       difficultyLabel: newRecipeDifficulty === 'easy' ? '极易上手' : newRecipeDifficulty === 'medium' ? '中等难度' : '困难挑战',
-      prepTime: parseInt(newRecipePrepTime) || 5,
-      cookTime: parseInt(newRecipeCookTime) || 5,
+      totalTime: parseInt(newRecipeTotalTime) || 15,
       calories: 300,
       tags: customTags,
       tagClasses: ['lozenge-blue', 'lozenge-default'],
@@ -767,8 +761,7 @@ function App() {
   const resetRecipeForm = () => {
     setNewRecipeTitle('');
     setNewRecipeDesc('');
-    setNewRecipePrepTime('');
-    setNewRecipeCookTime('');
+    setNewRecipeTotalTime('');
     setNewRecipeDifficulty('medium');
     setNewRecipeIngredients([createEmptyIngredientEntry()]);
     setNewRecipeSteps([createEmptyStepEntry()]);
@@ -1306,11 +1299,7 @@ function App() {
                   <div className="card-meta">
                     <div className="meta-item">
                       <Clock size={14} strokeWidth={2.5} />
-                      <span>准备 {recipe.prepTime} 分钟</span>
-                    </div>
-                    <div className="meta-item">
-                      <Flame size={14} strokeWidth={2.5} />
-                      <span>烹饪 {recipe.cookTime} 分钟</span>
+                      <span>预计 {recipe.totalTime ?? ((recipe.prepTime || 0) + (recipe.cookTime || 0))} 分钟</span>
                     </div>
                   </div>
                   <div className="card-tags">
@@ -1593,27 +1582,15 @@ function App() {
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                  <div className="entry-form-group" style={{ flex: 1 }}>
-                    <label className="entry-form-label">准备时间 (分钟)</label>
-                    <input
-                      type="number"
-                      className="entry-form-input"
-                      placeholder="如：15"
-                      value={newRecipePrepTime}
-                      onChange={(e) => setNewRecipePrepTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="entry-form-group" style={{ flex: 1 }}>
-                    <label className="entry-form-label">烹饪时间 (分钟)</label>
-                    <input
-                      type="number"
-                      className="entry-form-input"
-                      placeholder="如：20"
-                      value={newRecipeCookTime}
-                      onChange={(e) => setNewRecipeCookTime(e.target.value)}
-                    />
-                  </div>
+                <div className="entry-form-group">
+                  <label className="entry-form-label">预计总时间 (分钟)</label>
+                  <input
+                    type="number"
+                    className="entry-form-input"
+                    placeholder="如：25"
+                    value={newRecipeTotalTime}
+                    onChange={(e) => setNewRecipeTotalTime(e.target.value)}
+                  />
                 </div>
 
                 <div className="entry-form-group">
@@ -1959,11 +1936,7 @@ function App() {
                 <div className="card-meta">
                   <div className="meta-item">
                     <Clock size={14} strokeWidth={2.5} />
-                    <span>准备 {selectedRecipe.prepTime} 分钟</span>
-                  </div>
-                  <div className="meta-item">
-                    <Flame size={14} strokeWidth={2.5} />
-                    <span>烹饪 {selectedRecipe.cookTime} 分钟</span>
+                    <span>预计 {selectedRecipe.totalTime ?? ((selectedRecipe.prepTime || 0) + (selectedRecipe.cookTime || 0))} 分钟</span>
                   </div>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', lineHeight: '1.6', marginTop: 'var(--spacing-xs)' }}>
