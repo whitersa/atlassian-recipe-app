@@ -48,6 +48,8 @@ import {
 import {
   requestTimerNotificationPermission,
   sendSystemTimerNotification,
+  scheduleCloudTimerPush,
+  cancelCloudTimerPush,
   acquireCookingWakeLock,
   releaseCookingWakeLock,
 } from './notifications';
@@ -902,6 +904,7 @@ function App() {
   const [completedTimerKeys, setCompletedTimerKeys] = useState({});
   const initialRunSecondsRef = useRef(0);
   const activeTimerMetaRef = useRef(null);
+  const cloudPushMessageIdRef = useRef(null);
   const wakeLockRef = useRef(null);
   const notifHintShownRef = useRef(false);
 
@@ -967,7 +970,23 @@ function App() {
     if (!isTimerRunning || initialRunSecondsRef.current <= 0) return undefined;
 
     const endAt = Date.now() + initialRunSecondsRef.current * 1000;
+    const currentMeta = activeTimerMetaRef.current;
     let finished = false;
+
+    // Schedule remote Web Push so iOS APNs / FCM wakes the phone up even if screen is locked
+    if (currentMeta && initialRunSecondsRef.current > 0) {
+      scheduleCloudTimerPush({
+        delaySeconds: initialRunSecondsRef.current,
+        recipeTitle: currentMeta.recipeTitle,
+        timerLabel: currentMeta.timerLabel,
+        stepTitle: currentMeta.stepTitle,
+        tag: `recipe-timer-${currentMeta.key}`,
+      }).then((res) => {
+        if (res.ok && res.messageId) {
+          cloudPushMessageIdRef.current = res.messageId;
+        }
+      });
+    }
 
     const syncClock = () => {
       if (finished) return;
@@ -1014,6 +1033,10 @@ function App() {
     return () => {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
+      if (cloudPushMessageIdRef.current) {
+        cancelCloudTimerPush(cloudPushMessageIdRef.current);
+        cloudPushMessageIdRef.current = null;
+      }
     };
   }, [isTimerRunning, timerRunId, pushAppToast]);
 
@@ -1118,6 +1141,10 @@ function App() {
   };
 
   const resetTimerState = () => {
+    if (cloudPushMessageIdRef.current) {
+      cancelCloudTimerPush(cloudPushMessageIdRef.current);
+      cloudPushMessageIdRef.current = null;
+    }
     initialRunSecondsRef.current = 0;
     activeTimerMetaRef.current = null;
     setIsTimerRunning(false);
