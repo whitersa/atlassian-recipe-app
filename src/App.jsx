@@ -39,6 +39,7 @@ import {
   Layers,
   Settings,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import {
   ComponentInspectorPage,
@@ -1618,54 +1619,77 @@ function App() {
 
                 {/* Dynamic Ingredients list (supports Optional flag & Parallel Alternatives) */}
                 <div className="entry-form-group">
-                  <label className="entry-form-label">所需材料清单</label>
-                  <div className="entry-form-row-group">
+                  <div className="entry-form-label-row">
+                    <label className="entry-form-label">所需材料清单</label>
+                    <span className="entry-form-sublabel">支持设定分类、可选及备选替换</span>
+                  </div>
+                  <div className="ing-cards-flow">
                     {newRecipeIngredients.map((ing, idx) => (
                       <div
                         key={idx}
-                        className={`ing-entry-card ${ing.optional ? 'is-optional' : ''}`}
+                        className={`ing-entry-card recipe-ingredient-card ${ing.optional ? 'is-optional' : ''}`}
                       >
-                        <div className="dynamic-row">
-                          <select
-                            className="entry-form-select"
-                            style={{ flex: 0.8, minWidth: '58px', height: '34px', padding: '0 4px', fontSize: '12px' }}
-                            value={ing.type || 'basic'}
-                            onChange={(e) => updateRecipeIngredientField(idx, 'type', e.target.value)}
-                          >
-                            <option value="basic">主料</option>
-                            <option value="seasoning">辅料</option>
-                            <option value="spice">香料</option>
-                          </select>
-                          <input
-                            type="text"
-                            className="entry-form-input"
-                            placeholder="食材名称，如：牛肉末"
-                            value={ing.name}
-                            onChange={(e) => updateRecipeIngredientField(idx, 'name', e.target.value)}
-                            style={{ flex: 2 }}
-                          />
-                          <input
-                            type="text"
-                            className="entry-form-input"
-                            placeholder="分量，如：80克"
-                            value={ing.amount}
-                            onChange={(e) => updateRecipeIngredientField(idx, 'amount', e.target.value)}
-                            style={{ flex: 1 }}
-                          />
+                        {/* Card Header: Material Order # + Type Segmented Control + Delete */}
+                        <div className="ing-card-header">
+                          <div className="ing-card-header-left">
+                            <span className="ing-card-order-badge">#{idx + 1}</span>
+                            <div className="ing-type-segmented" role="radiogroup" aria-label="食材类型">
+                              {[
+                                { key: 'basic', label: '主料' },
+                                { key: 'seasoning', label: '辅料' },
+                                { key: 'spice', label: '香料' },
+                              ].map((t) => (
+                                <button
+                                  key={t.key}
+                                  type="button"
+                                  className={`ing-type-pill ${(ing.type || 'basic') === t.key ? 'active' : ''}`}
+                                  aria-pressed={(ing.type || 'basic') === t.key}
+                                  onClick={() => updateRecipeIngredientField(idx, 'type', t.key)}
+                                >
+                                  {t.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
                           {newRecipeIngredients.length > 1 && (
                             <button
                               type="button"
-                              className="btn-row-action delete"
-                              aria-label="删除材料"
+                              className="ing-card-delete-btn"
+                              aria-label={`删除第 ${idx + 1} 项材料`}
+                              title="删除此材料"
                               onClick={() =>
                                 setNewRecipeIngredients((prev) => prev.filter((_, i) => i !== idx))
                               }
                             >
-                              <X size={14} />
+                              <Trash2 size={15} />
                             </button>
                           )}
                         </div>
 
+                        {/* Card Inputs Grid: Ingredient Name & Amount */}
+                        <div className="ing-card-inputs-grid">
+                          <div className="ing-input-field name-field">
+                            <input
+                              type="text"
+                              className="entry-form-input ing-input"
+                              placeholder="食材名称，如：牛肉末"
+                              value={ing.name}
+                              onChange={(e) => updateRecipeIngredientField(idx, 'name', e.target.value)}
+                            />
+                          </div>
+                          <div className="ing-input-field amount-field">
+                            <input
+                              type="text"
+                              className="entry-form-input ing-input"
+                              placeholder="分量，如：80克"
+                              value={ing.amount}
+                              onChange={(e) => updateRecipeIngredientField(idx, 'amount', e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Card Footer Toolbar: Optional Toggle Chip + Add Alternative */}
                         <div className="ing-entry-toolbar">
                           <button
                             type="button"
@@ -1673,48 +1697,50 @@ function App() {
                             aria-pressed={Boolean(ing.optional)}
                             onClick={() => updateRecipeIngredientField(idx, 'optional', !ing.optional)}
                           >
-                            {ing.optional ? '✓ 可选材料（可不放）' : '设为可选'}
+                            {ing.optional ? '✓ 已设为可选材料 (非必放)' : '设为可选材料'}
                           </button>
                           <button
                             type="button"
                             className="ing-alt-add-btn"
                             onClick={() => addRecipeIngredientAlternative(idx)}
                           >
-                            <Plus size={12} strokeWidth={2.5} /> 添加备选替换
+                            <Plus size={13} strokeWidth={2.5} /> 添加备选替换
                           </button>
                         </div>
 
+                        {/* Alternative items list container */}
                         {(ing.alternatives || []).length > 0 && (
-                          <div className="ing-alt-editor-list">
+                          <div className="ing-alts-tray">
+                            <div className="ing-alts-tray-header">
+                              <span className="ing-alts-tray-title">或满足其一的替换材料：</span>
+                            </div>
                             {ing.alternatives.map((alt, altIdx) => (
-                              <div key={altIdx} className="dynamic-row ing-alt-editor-row">
-                                <span className="ing-alt-badge">备选</span>
+                              <div key={altIdx} className="ing-alt-card-row">
+                                <span className="ing-alt-badge">或</span>
                                 <input
                                   type="text"
-                                  className="entry-form-input"
-                                  placeholder="替换材料，如：猪肉末"
+                                  className="entry-form-input ing-alt-input"
+                                  placeholder="替换食材，如：猪肉末"
                                   value={alt.name}
                                   onChange={(e) =>
                                     updateRecipeIngredientAlternative(idx, altIdx, 'name', e.target.value)
                                   }
-                                  style={{ flex: 2 }}
                                 />
                                 <input
                                   type="text"
-                                  className="entry-form-input"
+                                  className="entry-form-input ing-alt-input amount"
                                   placeholder={
-                                    ing.amount.trim() ? `同上 (${ing.amount.trim()})` : '分量，如：80克'
+                                    ing.amount.trim() ? `同上 (${ing.amount.trim()})` : '分量'
                                   }
                                   value={alt.amount}
                                   onChange={(e) =>
                                     updateRecipeIngredientAlternative(idx, altIdx, 'amount', e.target.value)
                                   }
-                                  style={{ flex: 1.15 }}
                                 />
                                 <button
                                   type="button"
-                                  className="btn-row-action delete"
-                                  aria-label="删除备选材料"
+                                  className="ing-alt-del-btn"
+                                  aria-label="删除此备选材料"
                                   onClick={() => removeRecipeIngredientAlternative(idx, altIdx)}
                                 >
                                   <X size={13} />
@@ -1727,13 +1753,12 @@ function App() {
                     ))}
                     <button
                       type="button"
-                      className="recipe-link-btn"
+                      className="ing-add-card-btn"
                       onClick={() =>
                         setNewRecipeIngredients((prev) => [...prev, createEmptyIngredientEntry()])
                       }
-                      style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
                     >
-                      <Plus size={12} strokeWidth={3} /> 添加一行材料
+                      <Plus size={15} strokeWidth={2.5} /> 添加一行材料
                     </button>
                   </div>
                 </div>
