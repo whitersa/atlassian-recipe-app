@@ -1,11 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   loadAllData,
   saveTheme,
   saveWorkplaceMode,
+  saveHomeIngredients,
   saveRecipes,
   saveIngredientLibrary,
 } from './storage';
+import {
+  DATA_VERSION,
+  migrateData,
+  safeRestoreData,
+  normalizeRecipesList,
+} from './migrations';
 import { 
   ChefHat, 
   Eye, 
@@ -29,48 +36,21 @@ import {
   BookOpen,
   Leaf,
   Download,
-  Upload
+  Upload,
+  Layers
 } from 'lucide-react';
-import { useRef } from 'react';
-
-// Data schema version for import/export migration
-const DATA_VERSION = 1;
-
-// Migration functions: each migrates from version N to N+1
-// Add new entries here when the data structure changes
-const DATA_MIGRATIONS = {
-  // Example for future: 1 -> 2
-  // 1: (data) => {
-  //   // transform data from v1 to v2 format
-  //   return { ...data, newField: 'default' };
-  // },
-};
-
-const migrateData = (exportedData) => {
-  let { version = 1, data } = exportedData;
-  
-  // Apply migrations sequentially
-  while (version < DATA_VERSION) {
-    const migrateFn = DATA_MIGRATIONS[version];
-    if (migrateFn) {
-      data = migrateFn(data);
-    }
-    version++;
-  }
-  
-  return data;
-};
-
-// Safely parse imported data with fallbacks for missing/extra fields
-const safeRestoreData = (importedData) => {
-  return {
-    theme: typeof importedData.theme === 'string' ? importedData.theme : 'light',
-    workplaceMode: typeof importedData.workplaceMode === 'boolean' ? importedData.workplaceMode : true,
-    homeIngredients: Array.isArray(importedData.homeIngredients) ? importedData.homeIngredients : [],
-    recipes: Array.isArray(importedData.recipes) ? importedData.recipes : [],
-    ingredientLibrary: Array.isArray(importedData.ingredientLibrary) ? importedData.ingredientLibrary : [],
-  };
-};
+import {
+  ComponentInspectorPage,
+  MobilePressCard,
+  MobileToastRegion,
+  useToastQueue,
+} from './components';
+import {
+  requestTimerNotificationPermission,
+  sendSystemTimerNotification,
+  acquireCookingWakeLock,
+  releaseCookingWakeLock,
+} from './notifications';
 
 // Mock Database of Recipes (Chinese Cuisine Focus)
 const recipes = [
@@ -91,31 +71,55 @@ const recipes = [
     category: 'lunch',
     description: '川菜的代表作之一，讲究“麻、辣、烫、香、酥、嫩、鲜、活”。用红油豆瓣酱与大红袍花椒粉，搭配滑嫩的豆腐与焦香 of 牛肉末，是米饭的完美伴侣。',
     ingredients: [
-      { name: '嫩豆腐 (石膏/南豆腐)', amount: '400 克', type: 'basic' },
-      { name: '牛肉末 (或猪肉末)', amount: '80 克', type: 'basic' },
-      { name: '郫县豆瓣酱', amount: '1.5 汤匙', type: 'seasoning' },
-      { name: '四川大红袍花椒粉', amount: '1 茶匙', type: 'spice' },
-      { name: '青蒜苗', amount: '2 根', type: 'spice' },
-      { name: '豆豉', amount: '1 茶匙', type: 'seasoning' },
-      { name: '姜末、蒜末', amount: '各 1 茶匙', type: 'spice' },
-      { name: '高汤或清水', amount: '150 毫升', type: 'seasoning' },
-      { name: '水淀粉 (勾芡用)', amount: '适量', type: 'seasoning' }
+      {
+        name: '南豆腐 (石膏豆腐)',
+        amount: '400 克',
+        type: 'basic',
+        optional: false,
+        alternatives: [{ name: '内酯嫩豆腐', amount: '400 克', type: 'basic' }],
+      },
+      {
+        name: '牛肉末',
+        amount: '80 克',
+        type: 'basic',
+        optional: false,
+        alternatives: [{ name: '猪肉末', amount: '80 克', type: 'basic' }],
+      },
+      { name: '郫县豆瓣酱', amount: '1.5 汤匙', type: 'seasoning', optional: false, alternatives: [] },
+      { name: '四川大红袍花椒粉', amount: '1 茶匙', type: 'spice', optional: false, alternatives: [] },
+      {
+        name: '青蒜苗',
+        amount: '2 根',
+        type: 'spice',
+        optional: false,
+        alternatives: [{ name: '小葱葱花', amount: '2 根', type: 'spice' }],
+      },
+      { name: '豆豉', amount: '1 茶匙', type: 'seasoning', optional: true, alternatives: [] },
+      { name: '姜末、蒜末', amount: '各 1 茶匙', type: 'spice', optional: false, alternatives: [] },
+      {
+        name: '高汤',
+        amount: '150 毫升',
+        type: 'seasoning',
+        optional: false,
+        alternatives: [{ name: '温清水', amount: '150 毫升', type: 'seasoning' }],
+      },
+      { name: '水淀粉 (勾芡用)', amount: '适量', type: 'seasoning', optional: false, alternatives: [] }
     ],
     steps: [
       {
         title: '豆腐焯水与准备',
         desc: '将[主:豆腐]切成 2 厘米见方的小块。锅中烧开水，加入少许[辅:盐]，下入[主:豆腐]块轻轻焯水 1 分钟，捞出沥干（这样可去除豆腥味，且豆腐不易碎）。[香:青蒜苗]斜切成段。',
-        duration: 180
+        timers: [{ label: '豆腐焯水', duration: 60 }]
       },
       {
         title: '炒制肉末与红油',
         desc: '热锅凉油，下[主:牛肉末]煸炒至水分收干、呈金黄酥香状态后盛出。锅内留底油，小火下[辅:郫县豆瓣酱]、剁碎的[辅:豆豉]以及[香:姜蒜末]，慢炒出红油与香气。',
-        duration: 240
+        timers: []
       },
       {
         title: '烧制与三次勾芡',
         desc: '倒入[辅:高汤]，加入[主:豆腐]和炒好的[主:牛肉末]，大火烧开转小火慢烧 5 分钟入味。分三次倒入[辅:水淀粉]勾芡（每次间隔半分钟），使酱汁完美包裹豆腐。出锅盛盘，撒上大量[香:花椒粉]和[香:青蒜苗]。',
-        duration: 300
+        timers: [{ label: '小火慢烧入味', duration: 300 }]
       }
     ],
     nutrition: {
@@ -142,29 +146,41 @@ const recipes = [
     category: 'dinner',
     description: '驰名中外的中餐名菜，红亮油润。鸡丁鲜嫩，花生米酥脆，味道酸甜中带着微辣与淡淡的花椒麻香。',
     ingredients: [
-      { name: '鸡胸肉 (或鸡腿肉)', amount: '250 克', type: 'basic' },
-      { name: '熟花生米 (去皮)', amount: '50 克', type: 'basic' },
-      { name: '干辣椒段', amount: '10 克', type: 'spice' },
-      { name: '花椒粒', amount: '1 茶匙', type: 'spice' },
-      { name: '大葱 (切小段)', amount: '1 根', type: 'spice' },
-      { name: '姜片、蒜片', amount: '各 5 克', type: 'spice' },
-      { name: '宫保调味汁 (糖、醋、生抽、淀粉、水)', amount: '1 小碗', type: 'seasoning' }
+      {
+        name: '鸡腿肉 (去骨)',
+        amount: '250 克',
+        type: 'basic',
+        optional: false,
+        alternatives: [{ name: '鸡胸肉', amount: '250 克', type: 'basic' }],
+      },
+      {
+        name: '熟花生米 (去皮)',
+        amount: '50 克',
+        type: 'basic',
+        optional: false,
+        alternatives: [{ name: '熟腰果', amount: '50 克', type: 'basic' }],
+      },
+      { name: '干辣椒段', amount: '10 克', type: 'spice', optional: false, alternatives: [] },
+      { name: '花椒粒', amount: '1 茶匙', type: 'spice', optional: true, alternatives: [] },
+      { name: '大葱 (切小段)', amount: '1 根', type: 'spice', optional: false, alternatives: [] },
+      { name: '姜片、蒜片', amount: '各 5 克', type: 'spice', optional: false, alternatives: [] },
+      { name: '宫保调味汁 (糖、醋、生抽、淀粉、水)', amount: '1 小碗', type: 'seasoning', optional: false, alternatives: [] }
     ],
     steps: [
       {
         title: '鸡丁切配与腌制',
         desc: '[主:鸡肉]切成 1.5 厘米的丁，加入少许[辅:盐]、料酒、[辅:生抽]、[辅:水淀粉]和一茶匙[辅:食用油]抓匀，腌制 10-15 分钟锁住水分。调制[辅:宫保调味汁]：碗中加入[辅:白糖]、[辅:香醋]（糖醋比例约1:1）、[辅:生抽]、[辅:盐]、[辅:淀粉]和少许水搅拌均匀。',
-        duration: 300
+        timers: [{ label: '鸡丁腌制锁水', duration: 600 }]
       },
       {
         title: '滑炒鸡丁',
         desc: '锅中倒入稍多的油，烧至五成热时下入腌好的[主:鸡丁]，快速滑炒至鸡丁变白八成熟，立即捞出控油待用。',
-        duration: 120
+        timers: []
       },
       {
         title: '爆香干椒与大火合炒',
         desc: '锅留底油，下[香:花椒粒]、[香:干辣椒段]用小火加热至微变褐色。下入[香:姜蒜片]、[香:大葱]爆香，随后倒入[主:鸡丁]。倒入调好的[辅:宫保调味汁]，大火快速翻炒至酱汁粘稠包裹鸡肉，最后倒入[主:熟花生米]翻匀即可关火出锅。',
-        duration: 180
+        timers: []
       }
     ],
     nutrition: {
@@ -191,28 +207,34 @@ const recipes = [
     category: 'breakfast',
     description: '每个中国家庭餐桌上最经典、最温馨的快手菜。金黄软嫩的鸡蛋吸饱了番茄的酸甜汤汁，超级下饭。',
     ingredients: [
-      { name: '新鲜鸡蛋', amount: '3 个', type: 'basic' },
-      { name: '熟透多汁番茄', amount: '2 个', type: 'basic' },
-      { name: '小葱 (切段)', amount: '2 根', type: 'spice' },
-      { name: '白糖', amount: '1 茶匙', type: 'seasoning' },
-      { name: '盐', amount: '1/2 茶匙', type: 'seasoning' },
-      { name: '食用油', amount: '适量', type: 'seasoning' }
+      { name: '新鲜鸡蛋', amount: '3 个', type: 'basic', optional: false, alternatives: [] },
+      { name: '熟透多汁番茄', amount: '2 个', type: 'basic', optional: false, alternatives: [] },
+      { name: '小葱 (切段)', amount: '2 根', type: 'spice', optional: true, alternatives: [] },
+      {
+        name: '白糖',
+        amount: '1 茶匙',
+        type: 'seasoning',
+        optional: true,
+        alternatives: [{ name: '番茄酱 (增味提色)', amount: '1 汤匙', type: 'seasoning' }],
+      },
+      { name: '盐', amount: '1/2 茶匙', type: 'seasoning', optional: false, alternatives: [] },
+      { name: '食用油', amount: '适量', type: 'seasoning', optional: false, alternatives: [] }
     ],
     steps: [
       {
         title: '食材准备与打散蛋液',
         desc: '[主:新鲜鸡蛋]打入碗中，加 1/4 茶匙[辅:盐]，用筷子快速顺时针打散至有丰富泡沫。[主:熟透多汁番茄]顶端划十字开水烫皮去皮，切成滚刀块。[香:小葱]葱白切末，葱绿切段。',
-        duration: 120
+        timers: []
       },
       {
         title: '大火炒制滑蛋',
         desc: '锅中倒入足量[辅:食用油]烧至八成热（微微冒烟）。倒入[主:新鲜鸡蛋]液，蛋液迅速膨胀时用筷子快速划散，待蛋液刚刚凝固还有些湿润时立即盛出，切勿炒老。',
-        duration: 90
+        timers: []
       },
       {
         title: '炒制番茄与合炒',
         desc: '锅内留少许底油，下小葱炒香，倒入[主:熟透多汁番茄]块中火煸炒，用锅铲轻轻压番茄，炒出丰富的红沙汁。加入[辅:白糖]调味，随后倒入[主:新鲜鸡蛋]和[香:小葱]绿段，快速翻匀让鸡蛋吸收番茄汁，最后加剩余的[辅:盐]调味即可盛盘。',
-        duration: 180
+        timers: []
       }
     ],
     nutrition: {
@@ -322,6 +344,44 @@ const initialIngredients = [
 
 const generateRecipeId = () => String(Date.now());
 
+const createEmptyIngredientEntry = () => ({
+  name: '',
+  amount: '',
+  type: 'basic',
+  optional: false,
+  alternatives: [],
+});
+
+const createEmptyStepEntry = () => ({
+  title: '',
+  desc: '',
+  timers: [],
+});
+
+const getStepTimers = (step) => {
+  if (!step) return [];
+  if (Array.isArray(step.timers)) {
+    return step.timers.filter((t) => t && Number(t.duration) > 0);
+  }
+  if (Number(step.duration) > 0) {
+    return [
+      {
+        label: step.timerLabel || step.title || '辅助计时',
+        duration: Number(step.duration),
+      },
+    ];
+  }
+  return [];
+};
+
+const getIngredientGroupOptions = (ing) => [
+  { name: ing.name, amount: ing.amount, type: ing.type || 'basic' },
+  ...(Array.isArray(ing.alternatives) ? ing.alternatives : []),
+];
+
+const isIngredientGroupSatisfied = (ing, groupIdx, checkedMap) =>
+  getIngredientGroupOptions(ing).some((_, optIdx) => Boolean(checkedMap[`${groupIdx}-${optIdx}`]));
+
 function App() {
   // Loading state for async IndexedDB initialization
   const [isLoading, setIsLoading] = useState(true);
@@ -332,8 +392,17 @@ function App() {
   // Workplace mode state (default to true)
   const [workplaceMode, setWorkplaceMode] = useState(true);
 
-  // Tab navigation state ('recipes' or 'ingredients')
-  const [currentTab, setCurrentTab] = useState('recipes');
+  // Tab navigation state ('recipes', 'ingredients', or 'components')
+  const [currentTab, setCurrentTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') === 'components' || window.location.hash === '#components') {
+      return 'components';
+    }
+    if (params.get('view') === 'ingredients') {
+      return 'ingredients';
+    }
+    return 'recipes';
+  });
 
   // Entry form modal visibility
   const [showRecipeForm, setShowRecipeForm] = useState(false);
@@ -344,39 +413,31 @@ function App() {
   // Selected material type for sub-views ('basic', 'seasoning', 'semi-finished', or null)
   const [selectedMaterialType, setSelectedMaterialType] = useState(null);
 
+  // Persisted home ingredients state (preserved across export/import)
+  const [homeIngredients, setHomeIngredients] = useState([]);
+
   // Recipes list state (customizable)
   const [recipesList, setRecipesList] = useState(recipes);
 
   // Ingredient library list state (customizable)
   const [ingredientLibraryList, setIngredientLibraryList] = useState(INGREDIENT_LIBRARY);
 
-  // Async initialization: load all data from IndexedDB
+  // Async initialization: load all data from IndexedDB (auto-migrates older schema versions)
   useEffect(() => {
     const init = async () => {
       try {
         const data = await loadAllData({
           theme: 'light',
           workplaceMode: true,
+          homeIngredients: [],
           recipes,
           ingredientLibrary: INGREDIENT_LIBRARY,
         });
 
         setTheme(data.theme);
         setWorkplaceMode(data.workplaceMode);
-        // Sanitize legacy recipe tags to keep them practical and grounded
-        const sanitizedRecipes = (data.recipes || []).map(recipe => {
-          if (recipe.id === '1' && recipe.tags && recipe.tags.includes('经典川菜')) {
-            return { ...recipe, tags: ['麻辣', '豆腐'], tagClasses: ['lozenge-red', 'lozenge-default'] };
-          }
-          if (recipe.id === '2' && recipe.tags && recipe.tags.includes('国宴经典')) {
-            return { ...recipe, tags: ['酸甜微辣', '鸡肉'], tagClasses: ['lozenge-orange', 'lozenge-default'] };
-          }
-          if (recipe.id === '3' && recipe.tags && recipe.tags.includes('新手必备')) {
-            return { ...recipe, tags: ['酸甜', '鸡蛋'], tagClasses: ['lozenge-green', 'lozenge-default'] };
-          }
-          return recipe;
-        });
-        setRecipesList(sanitizedRecipes);
+        setHomeIngredients(data.homeIngredients || []);
+        setRecipesList(normalizeRecipesList(data.recipes));
         setIngredientLibraryList(data.ingredientLibrary);
       } catch (err) {
         console.error('Failed to load data from IndexedDB:', err);
@@ -407,8 +468,8 @@ function App() {
   const [newRecipePrepTime, setNewRecipePrepTime] = useState('');
   const [newRecipeCookTime, setNewRecipeCookTime] = useState('');
   const [newRecipeDifficulty, setNewRecipeDifficulty] = useState('medium');
-  const [newRecipeIngredients, setNewRecipeIngredients] = useState([{ name: '', amount: '', type: 'basic' }]);
-  const [newRecipeSteps, setNewRecipeSteps] = useState([{ title: '', desc: '', duration: '' }]);
+  const [newRecipeIngredients, setNewRecipeIngredients] = useState(() => [createEmptyIngredientEntry()]);
+  const [newRecipeSteps, setNewRecipeSteps] = useState(() => [createEmptyStepEntry()]);
   const [recipeFormMessage, setRecipeFormMessage] = useState('');
 
   // Data import/export
@@ -424,7 +485,8 @@ function App() {
       data: {
         theme,
         workplaceMode,
-        recipes: recipesList,
+        homeIngredients,
+        recipes: normalizeRecipesList(recipesList),
         ingredientLibrary: ingredientLibraryList,
       }
     };
@@ -464,11 +526,14 @@ function App() {
           throw new Error('文件格式不正确：缺少 data 字段');
         }
 
-        // Migrate if version differs
-        const migrated = raw.version !== DATA_VERSION ? migrateData(raw) : raw.data;
-        
-        // Safe restore with fallbacks
-        const restored = safeRestoreData(migrated);
+        const incomingVersion =
+          typeof raw.version === 'number' && raw.version >= 1 ? Math.floor(raw.version) : 1;
+
+        // Migrate sequentially if version is older than DATA_VERSION, otherwise safe-normalize
+        const restored =
+          incomingVersion < DATA_VERSION
+            ? migrateData({ version: incomingVersion, data: raw.data })
+            : safeRestoreData(raw.data);
 
         // Apply to state (IndexedDB saves are handled by useEffect watchers)
         setTheme(restored.theme);
@@ -477,8 +542,10 @@ function App() {
         
         setWorkplaceMode(restored.workplaceMode);
         saveWorkplaceMode(restored.workplaceMode);
+
+        setHomeIngredients(restored.homeIngredients);
+        saveHomeIngredients(restored.homeIngredients);
         
-        // Merge: keep built-in recipes, add imported ones
         if (restored.recipes.length > 0) {
           setRecipesList(restored.recipes);
         }
@@ -488,7 +555,10 @@ function App() {
         }
 
         const exportDate = raw.exportedAt ? new Date(raw.exportedAt).toLocaleString('zh-CN') : '未知时间';
-        const versionInfo = raw.version !== DATA_VERSION ? ` (已从 v${raw.version} 迁移至 v${DATA_VERSION})` : '';
+        const versionInfo =
+          incomingVersion < DATA_VERSION
+            ? ` (已从 v${incomingVersion} 迁移至 v${DATA_VERSION})`
+            : '';
         setDataMessage(`导入成功！备份来自 ${exportDate}${versionInfo}，共 ${restored.recipes.length} 道菜谱`);
         setDataMessageType('success');
         setTimeout(() => setDataMessage(''), 5000);
@@ -542,22 +612,60 @@ function App() {
       return;
     }
 
-    // Filter out empty ingredients and steps
+    // Filter out empty ingredients and steps (preserving optional flag & alternatives)
     const validIngredients = newRecipeIngredients
-      .filter(ing => ing.name.trim() !== '')
-      .map(ing => ({ 
-        name: ing.name.trim(), 
-        amount: ing.amount.trim() || '适量',
-        type: ing.type || 'basic'
-      }));
+      .map((ing) => {
+        const baseType = ing.type || 'basic';
+        const baseAmount = ing.amount.trim() || '适量';
+        const cleanAlts = (ing.alternatives || [])
+          .filter((alt) => alt.name.trim() !== '')
+          .map((alt) => ({
+            name: alt.name.trim(),
+            amount: alt.amount.trim() || baseAmount,
+            type: alt.type || baseType,
+          }));
+
+        if (ing.name.trim() !== '') {
+          return {
+            name: ing.name.trim(),
+            amount: baseAmount,
+            type: baseType,
+            optional: Boolean(ing.optional),
+            alternatives: cleanAlts,
+          };
+        }
+
+        if (cleanAlts.length > 0) {
+          const [firstAlt, ...restAlts] = cleanAlts;
+          return {
+            name: firstAlt.name,
+            amount: firstAlt.amount,
+            type: firstAlt.type || baseType,
+            optional: Boolean(ing.optional),
+            alternatives: restAlts,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
 
     const validSteps = newRecipeSteps
-      .filter(step => step.desc.trim() !== '')
-      .map((step, idx) => ({
-        title: step.title.trim() || `步骤 ${idx + 1}`,
-        desc: step.desc.trim(),
-        duration: parseInt(step.duration) || 0
-      }));
+      .filter((step) => step.desc.trim() !== '')
+      .map((step, idx) => {
+        const stepTitle = step.title.trim() || `步骤 ${idx + 1}`;
+        const validTimers = (step.timers || [])
+          .filter((t) => parseInt(t.duration, 10) > 0)
+          .map((t) => ({
+            label: t.label.trim() || stepTitle,
+            duration: parseInt(t.duration, 10),
+          }));
+        return {
+          title: stepTitle,
+          desc: step.desc.trim(),
+          timers: validTimers,
+        };
+      });
 
     if (validIngredients.length === 0) {
       setRecipeFormMessage('请至少添加一个食材');
@@ -569,7 +677,10 @@ function App() {
       return;
     }
 
-    const firstBasicIng = validIngredients.find(i => i.type === 'basic')?.name;
+    const firstBasicIng = (
+      validIngredients.find((i) => i.type === 'basic' && !i.optional) ||
+      validIngredients.find((i) => i.type === 'basic')
+    )?.name;
     const cleanBasicName = firstBasicIng ? firstBasicIng.replace(/\s*\(.*?\)/g, '').trim() : '';
     const customTags = [newRecipeDifficulty === 'easy' ? '快手' : '家常'];
     if (cleanBasicName) customTags.push(cleanBasicName);
@@ -614,11 +725,99 @@ function App() {
     setNewRecipePrepTime('');
     setNewRecipeCookTime('');
     setNewRecipeDifficulty('medium');
-    setNewRecipeIngredients([{ name: '', amount: '', type: 'basic' }]);
-    setNewRecipeSteps([{ title: '', desc: '', duration: '' }]);
+    setNewRecipeIngredients([createEmptyIngredientEntry()]);
+    setNewRecipeSteps([createEmptyStepEntry()]);
     setRecipeFormMessage('');
     setShowRecipeFormActive(false);
     setTimeout(() => setShowRecipeForm(false), 300);
+  };
+
+  const addRecipeStepTimer = (stepIdx) => {
+    setNewRecipeSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIdx
+          ? {
+              ...step,
+              timers: [...(step.timers || []), { label: '', duration: '' }],
+            }
+          : step
+      )
+    );
+  };
+
+  const updateRecipeStepTimer = (stepIdx, timerIdx, field, value) => {
+    setNewRecipeSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIdx
+          ? {
+              ...step,
+              timers: (step.timers || []).map((t, j) =>
+                j === timerIdx ? { ...t, [field]: value } : t
+              ),
+            }
+          : step
+      )
+    );
+  };
+
+  const removeRecipeStepTimer = (stepIdx, timerIdx) => {
+    setNewRecipeSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIdx
+          ? {
+              ...step,
+              timers: (step.timers || []).filter((_, j) => j !== timerIdx),
+            }
+          : step
+      )
+    );
+  };
+
+  const updateRecipeIngredientField = (idx, field, value) => {
+    setNewRecipeIngredients((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item))
+    );
+  };
+
+  const addRecipeIngredientAlternative = (idx) => {
+    setNewRecipeIngredients((prev) =>
+      prev.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              alternatives: [...(item.alternatives || []), { name: '', amount: '' }],
+            }
+          : item
+      )
+    );
+  };
+
+  const updateRecipeIngredientAlternative = (idx, altIdx, field, value) => {
+    setNewRecipeIngredients((prev) =>
+      prev.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              alternatives: (item.alternatives || []).map((alt, j) =>
+                j === altIdx ? { ...alt, [field]: value } : alt
+              ),
+            }
+          : item
+      )
+    );
+  };
+
+  const removeRecipeIngredientAlternative = (idx, altIdx) => {
+    setNewRecipeIngredients((prev) =>
+      prev.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              alternatives: (item.alternatives || []).filter((_, j) => j !== altIdx),
+            }
+          : item
+      )
+    );
   };
 
   const openRecipeForm = () => {
@@ -669,6 +868,13 @@ function App() {
     setCurrentTab(tab);
     setSearchQuery('');
     setSelectedMaterialType(null); // Reset sub-view state
+    const url = new URL(window.location.href);
+    if (tab === 'components') {
+      url.searchParams.set('view', 'components');
+    } else {
+      url.searchParams.delete('view');
+    }
+    window.history.replaceState({}, '', url);
   };
 
   // Search & Filter state
@@ -682,19 +888,48 @@ function App() {
   // Ingredients checkbox states
   const [ingredientChecked, setIngredientChecked] = useState({});
 
+  // Top-anchored in-app toast queue (complements OS-level PWA notifications)
+  const { toasts: appToasts, push: pushAppToast, dismiss: dismissAppToast } = useToastQueue();
+
   // Steps active states
   const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState([]);
 
-  // Timer states
+  // Assistive timer block states (keyed by `${stepIdx}-${timerIdx}`, wall-clock synchronized)
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [activeTimerStepIndex, setActiveTimerStepIndex] = useState(null);
+  const [timerRunId, setTimerRunId] = useState(0);
+  const [activeTimerKey, setActiveTimerKey] = useState(null);
+  const [completedTimerKeys, setCompletedTimerKeys] = useState({});
+  const initialRunSecondsRef = useRef(0);
+  const activeTimerMetaRef = useRef(null);
+  const wakeLockRef = useRef(null);
+  const notifHintShownRef = useRef(false);
 
   // Initialize theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Keep kitchen screen awake while an assistive timer is actively running
+  useEffect(() => {
+    let cancelled = false;
+    if (isTimerRunning) {
+      acquireCookingWakeLock().then((sentinel) => {
+        if (cancelled) {
+          releaseCookingWakeLock(sentinel);
+        } else {
+          wakeLockRef.current = sentinel;
+        }
+      });
+    } else if (wakeLockRef.current) {
+      releaseCookingWakeLock(wakeLockRef.current);
+      wakeLockRef.current = null;
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isTimerRunning]);
 
   // Audio Synthesizer Beep Alarm
   const playBeepAlarm = () => {
@@ -727,64 +962,60 @@ function App() {
     }
   };
 
-  // Browser Notification for timer completion
-  const sendTimerNotification = (recipeTitle, stepTitle) => {
-    if (!('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-
-    try {
-      new Notification(`⏰ ${stepTitle} 已完成`, {
-        body: `「${recipeTitle}」的该步骤计时已结束，请及时操作！`,
-        icon: 'assets/tofu.png',
-        tag: 'recipe-timer',
-        requireInteraction: true
-      });
-    } catch (err) {
-      console.error('Notification error:', err);
-    }
-  };
-
-  // Timer countdown hook
+  // Wall-clock synchronized assistive timer countdown (immune to mobile background interval drift)
   useEffect(() => {
-    let interval = null;
-    if (isTimerRunning && timerSecondsLeft > 0) {
-      interval = setInterval(() => {
-        setTimerSecondsLeft(prev => {
-          if (prev <= 1) {
-            setIsTimerRunning(false);
-            playBeepAlarm();
+    if (!isTimerRunning || initialRunSecondsRef.current <= 0) return undefined;
 
-            // Send browser notification
-            if (selectedRecipe && activeTimerStepIndex !== null) {
-              const stepTitle = selectedRecipe.steps[activeTimerStepIndex]?.title || '当前步骤';
-              sendTimerNotification(selectedRecipe.title, stepTitle);
-            }
-            
-            // Mark step as completed
-            if (activeTimerStepIndex !== null) {
-              setCompletedSteps(old => {
-                if (!old.includes(activeTimerStepIndex)) {
-                  return [...old, activeTimerStepIndex];
-                }
-                return old;
-              });
-              
-              // Auto focus next step if exists
-              if (selectedRecipe && activeTimerStepIndex + 1 < selectedRecipe.steps.length) {
-                const nextStep = activeTimerStepIndex + 1;
-                setTimeout(() => {
-                  setActiveStepIndex(nextStep);
-                }, 1000);
-              }
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, timerSecondsLeft, activeTimerStepIndex, selectedRecipe]);
+    const endAt = Date.now() + initialRunSecondsRef.current * 1000;
+    let finished = false;
+
+    const syncClock = () => {
+      if (finished) return;
+      const remainingMs = endAt - Date.now();
+
+      if (remainingMs <= 0) {
+        finished = true;
+        const finishedMeta = activeTimerMetaRef.current;
+        initialRunSecondsRef.current = 0;
+        setIsTimerRunning(false);
+        setTimerSecondsLeft(0);
+        playBeepAlarm();
+
+        if (finishedMeta) {
+          setCompletedTimerKeys((prev) => ({ ...prev, [finishedMeta.key]: true }));
+          sendSystemTimerNotification({
+            recipeTitle: finishedMeta.recipeTitle,
+            timerLabel: finishedMeta.timerLabel,
+            stepTitle: finishedMeta.stepTitle,
+          });
+          pushAppToast({
+            title: `⏰ ${finishedMeta.timerLabel} 已到时`,
+            description: `「${finishedMeta.recipeTitle}」${finishedMeta.stepTitle} 辅助计时已完成`,
+            tone: 'brand',
+            duration: 7000,
+          });
+        }
+        return;
+      }
+
+      const nextSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+      setTimerSecondsLeft((prev) => (prev === nextSeconds ? prev : nextSeconds));
+    };
+
+    syncClock();
+    const interval = window.setInterval(syncClock, 250);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncClock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [isTimerRunning, timerRunId, pushAppToast]);
 
 
   const toggleTheme = () => {
@@ -804,7 +1035,7 @@ function App() {
     setActiveTab(0);
     setIngredientChecked({});
     setActiveStepIndex(0);
-    setCompletedSteps([]);
+    setCompletedTimerKeys({});
     resetTimerState();
     
     // Smooth transition
@@ -821,38 +1052,77 @@ function App() {
     }, 300);
   };
 
-  // Timer Control actions
-  const startTimer = (stepIdx, duration) => {
-    // Request notification permission on first timer use
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+  // Assistive Timer Block Control actions
+  const toggleAssistTimer = (stepIdx, timerIdx, timerObj, stepTitle) => {
+    const key = `${stepIdx}-${timerIdx}`;
+    const recipeTitle = selectedRecipe?.title || '日常菜谱';
+    const timerLabel = timerObj.label || stepTitle || '辅助计时';
+
+    requestTimerNotificationPermission().then((perm) => {
+      if (perm === 'ios-needs-install' && !notifHintShownRef.current) {
+        notifHintShownRef.current = true;
+        pushAppToast({
+          title: 'iOS 系统通知提示',
+          description: '在 Safari 点击「分享 → 添加到主屏幕」后打开，即可接收系统锁屏通知。',
+          tone: 'warning',
+        });
+      }
+    });
+
+    setActiveStepIndex(stepIdx);
+
+    // Switching to a different timer block or restarting a completed timer block
+    if (activeTimerKey !== key || timerSecondsLeft <= 0) {
+      setCompletedTimerKeys((prev) => {
+        if (!prev[key]) return prev;
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+      activeTimerMetaRef.current = { key, recipeTitle, timerLabel, stepTitle };
+      initialRunSecondsRef.current = timerObj.duration;
+      setActiveTimerKey(key);
+      setTimerSecondsLeft(timerObj.duration);
+      setTimerRunId((n) => n + 1);
+      setIsTimerRunning(true);
+      return;
     }
 
-    if (activeTimerStepIndex !== stepIdx) {
-      // Switched steps, reset timer first
+    // Pausing currently running timer block
+    if (isTimerRunning) {
+      initialRunSecondsRef.current = timerSecondsLeft;
       setIsTimerRunning(false);
-      setTimerSecondsLeft(duration);
+      return;
     }
-    
-    setActiveTimerStepIndex(stepIdx);
-    setActiveStepIndex(stepIdx);
-    
-    setIsTimerRunning(prev => !prev);
+
+    // Resuming paused timer block
+    activeTimerMetaRef.current = { key, recipeTitle, timerLabel, stepTitle };
+    initialRunSecondsRef.current = timerSecondsLeft;
+    setTimerRunId((n) => n + 1);
+    setIsTimerRunning(true);
   };
 
-
-  const resetTimer = (stepIdx, duration) => {
-    if (activeTimerStepIndex === stepIdx) {
+  const resetAssistTimer = (stepIdx, timerIdx, duration) => {
+    const key = `${stepIdx}-${timerIdx}`;
+    setCompletedTimerKeys((prev) => {
+      if (!prev[key]) return prev;
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+    if (activeTimerKey === key) {
+      initialRunSecondsRef.current = duration;
       setIsTimerRunning(false);
       setTimerSecondsLeft(duration);
     }
-    setCompletedSteps(old => old.filter(s => s !== stepIdx));
   };
 
   const resetTimerState = () => {
+    initialRunSecondsRef.current = 0;
+    activeTimerMetaRef.current = null;
     setIsTimerRunning(false);
     setTimerSecondsLeft(0);
-    setActiveTimerStepIndex(null);
+    setActiveTimerKey(null);
   };
 
   // Helper formatting minutes/seconds
@@ -862,12 +1132,20 @@ function App() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Filtered recipes list
-  const filteredRecipes = recipesList.filter(recipe => {
-    const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (recipe.englishTitle && recipe.englishTitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                          (recipe.chef && recipe.chef.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
+  // Filtered recipes list (matches title, English title, chef, primary ingredients, and alternatives)
+  const filteredRecipes = recipesList.filter((recipe) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    const matchesHeader =
+      recipe.title.toLowerCase().includes(q) ||
+      (recipe.englishTitle && recipe.englishTitle.toLowerCase().includes(q)) ||
+      (recipe.chef && recipe.chef.toLowerCase().includes(q));
+    if (matchesHeader) return true;
+    return (recipe.ingredients || []).some(
+      (ing) =>
+        ing.name.toLowerCase().includes(q) ||
+        (ing.alternatives || []).some((alt) => alt.name.toLowerCase().includes(q))
+    );
   });
 
   const getIngredientCount = (type) => {
@@ -933,10 +1211,11 @@ function App() {
           {/* Main Feed */}
           <div className="recipe-feed">
             {filteredRecipes.map(recipe => (
-              <div 
-                key={recipe.id} 
-                className="recipe-card" 
-                onClick={() => handleOpenRecipe(recipe)}
+              <MobilePressCard
+                key={recipe.id}
+                className="recipe-card"
+                shellClassName="recipe-card-shell"
+                onPress={() => handleOpenRecipe(recipe)}
               >
                 <div className="card-image-wrapper">
                   <img className="recipe-image" src={recipe.image} alt={recipe.title} loading="lazy" />
@@ -962,7 +1241,7 @@ function App() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </MobilePressCard>
             ))}
           </div>
 
@@ -1191,13 +1470,16 @@ function App() {
           onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetIngredientForm(); }}
         >
           <div className="modal-content-container form-modal-container">
-            <div className="modal-handle-bar" />
-            <button className="modal-close-btn" onClick={resetIngredientForm} aria-label="关闭">
-              <X size={16} strokeWidth={2.5} />
-            </button>
-            <div className="form-modal-header">
-              <h2 className="form-modal-title">录入食材</h2>
-              <p className="form-modal-subtitle">添加自定义材料至食材库</p>
+            <div className="modal-header">
+              <h2 className="modal-header-title">录入食材</h2>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={resetIngredientForm}
+                aria-label="关闭"
+              >
+                <X size={20} strokeWidth={2.2} />
+              </button>
             </div>
             <div className="modal-body form-modal-body">
               <form onSubmit={handleAddCustomIngredient} className="entry-form-container">
@@ -1244,13 +1526,16 @@ function App() {
           onClick={(e) => { if (e.target.classList.contains('recipe-modal')) resetRecipeForm(); }}
         >
           <div className="modal-content-container form-modal-container">
-            <div className="modal-handle-bar" />
-            <button className="modal-close-btn" onClick={resetRecipeForm} aria-label="关闭">
-              <X size={16} strokeWidth={2.5} />
-            </button>
-            <div className="form-modal-header">
-              <h2 className="form-modal-title">录入菜谱</h2>
-              <p className="form-modal-subtitle">录入您的专属美味私房菜谱</p>
+            <div className="modal-header">
+              <h2 className="modal-header-title">录入菜谱</h2>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={resetRecipeForm}
+                aria-label="关闭"
+              >
+                <X size={20} strokeWidth={2.2} />
+              </button>
             </div>
             <div className="modal-body form-modal-body">
               <form onSubmit={handleAddCustomRecipe} className="entry-form-container">
@@ -1327,65 +1612,121 @@ function App() {
                   />
                 </div>
 
-                {/* Dynamic Ingredients list */}
+                {/* Dynamic Ingredients list (supports Optional flag & Parallel Alternatives) */}
                 <div className="entry-form-group">
                   <label className="entry-form-label">所需材料清单</label>
                   <div className="entry-form-row-group">
                     {newRecipeIngredients.map((ing, idx) => (
-                      <div key={idx} className="dynamic-row">
-                        <select
-                          className="entry-form-select"
-                          style={{ flex: 0.8, minWidth: '55px', height: '34px', padding: '0 4px', fontSize: '12px' }}
-                          value={ing.type || 'basic'}
-                          onChange={(e) => {
-                            const updated = [...newRecipeIngredients];
-                            updated[idx].type = e.target.value;
-                            setNewRecipeIngredients(updated);
-                          }}
-                        >
-                          <option value="basic">主料</option>
-                          <option value="seasoning">辅料</option>
-                          <option value="spice">香料</option>
-                        </select>
-                        <input
-                          type="text"
-                          className="entry-form-input"
-                          placeholder="食材名称，如：猪肉"
-                          value={ing.name}
-                          onChange={(e) => {
-                            const updated = [...newRecipeIngredients];
-                            updated[idx].name = e.target.value;
-                            setNewRecipeIngredients(updated);
-                          }}
-                          style={{ flex: 2 }}
-                        />
-                        <input
-                          type="text"
-                          className="entry-form-input"
-                          placeholder="分量，如：300克"
-                          value={ing.amount}
-                          onChange={(e) => {
-                            const updated = [...newRecipeIngredients];
-                            updated[idx].amount = e.target.value;
-                            setNewRecipeIngredients(updated);
-                          }}
-                          style={{ flex: 1 }}
-                        />
-                        {newRecipeIngredients.length > 1 && (
+                      <div
+                        key={idx}
+                        className={`ing-entry-card ${ing.optional ? 'is-optional' : ''}`}
+                      >
+                        <div className="dynamic-row">
+                          <select
+                            className="entry-form-select"
+                            style={{ flex: 0.8, minWidth: '58px', height: '34px', padding: '0 4px', fontSize: '12px' }}
+                            value={ing.type || 'basic'}
+                            onChange={(e) => updateRecipeIngredientField(idx, 'type', e.target.value)}
+                          >
+                            <option value="basic">主料</option>
+                            <option value="seasoning">辅料</option>
+                            <option value="spice">香料</option>
+                          </select>
+                          <input
+                            type="text"
+                            className="entry-form-input"
+                            placeholder="食材名称，如：牛肉末"
+                            value={ing.name}
+                            onChange={(e) => updateRecipeIngredientField(idx, 'name', e.target.value)}
+                            style={{ flex: 2 }}
+                          />
+                          <input
+                            type="text"
+                            className="entry-form-input"
+                            placeholder="分量，如：80克"
+                            value={ing.amount}
+                            onChange={(e) => updateRecipeIngredientField(idx, 'amount', e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          {newRecipeIngredients.length > 1 && (
+                            <button
+                              type="button"
+                              className="btn-row-action delete"
+                              aria-label="删除材料"
+                              onClick={() =>
+                                setNewRecipeIngredients((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="ing-entry-toolbar">
                           <button
                             type="button"
-                            className="btn-row-action delete"
-                            onClick={() => setNewRecipeIngredients(newRecipeIngredients.filter((_, i) => i !== idx))}
+                            className={`ing-opt-chip ${ing.optional ? 'active' : ''}`}
+                            aria-pressed={Boolean(ing.optional)}
+                            onClick={() => updateRecipeIngredientField(idx, 'optional', !ing.optional)}
                           >
-                            <X size={14} />
+                            {ing.optional ? '✓ 可选材料（可不放）' : '设为可选'}
                           </button>
+                          <button
+                            type="button"
+                            className="ing-alt-add-btn"
+                            onClick={() => addRecipeIngredientAlternative(idx)}
+                          >
+                            <Plus size={12} strokeWidth={2.5} /> 添加备选替换
+                          </button>
+                        </div>
+
+                        {(ing.alternatives || []).length > 0 && (
+                          <div className="ing-alt-editor-list">
+                            {ing.alternatives.map((alt, altIdx) => (
+                              <div key={altIdx} className="dynamic-row ing-alt-editor-row">
+                                <span className="ing-alt-badge">备选</span>
+                                <input
+                                  type="text"
+                                  className="entry-form-input"
+                                  placeholder="替换材料，如：猪肉末"
+                                  value={alt.name}
+                                  onChange={(e) =>
+                                    updateRecipeIngredientAlternative(idx, altIdx, 'name', e.target.value)
+                                  }
+                                  style={{ flex: 2 }}
+                                />
+                                <input
+                                  type="text"
+                                  className="entry-form-input"
+                                  placeholder={
+                                    ing.amount.trim() ? `同上 (${ing.amount.trim()})` : '分量，如：80克'
+                                  }
+                                  value={alt.amount}
+                                  onChange={(e) =>
+                                    updateRecipeIngredientAlternative(idx, altIdx, 'amount', e.target.value)
+                                  }
+                                  style={{ flex: 1.15 }}
+                                />
+                                <button
+                                  type="button"
+                                  className="btn-row-action delete"
+                                  aria-label="删除备选材料"
+                                  onClick={() => removeRecipeIngredientAlternative(idx, altIdx)}
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     ))}
                     <button
                       type="button"
                       className="recipe-link-btn"
-                      onClick={() => setNewRecipeIngredients([...newRecipeIngredients, { name: '', amount: '', type: 'basic' }])}
+                      onClick={() =>
+                        setNewRecipeIngredients((prev) => [...prev, createEmptyIngredientEntry()])
+                      }
                       style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
                     >
                       <Plus size={12} strokeWidth={3} /> 添加一行材料
@@ -1393,34 +1734,22 @@ function App() {
                   </div>
                 </div>
 
-                {/* Dynamic Steps list */}
+                {/* Dynamic Steps list (steps default to no timer; optional assistive timer blocks can be added on demand) */}
                 <div className="entry-form-group">
                   <label className="entry-form-label">烹饪步骤</label>
                   <div className="entry-form-row-group">
                     {newRecipeSteps.map((step, idx) => (
-                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderBottom: idx < newRecipeSteps.length - 1 ? '1px solid var(--ds-border)' : 'none', paddingBottom: idx < newRecipeSteps.length - 1 ? 'var(--spacing-xs)' : '0' }}>
+                      <div key={idx} className="ing-entry-card">
                         <div className="dynamic-row">
                           <input
                             type="text"
                             className="entry-form-input"
-                            placeholder={`步骤 ${idx + 1} 标题 (如: 食材准备)`}
+                            placeholder={`步骤 ${idx + 1} 标题 (如: 豆腐焯水与准备)`}
                             value={step.title}
                             onChange={(e) => {
-                              const updated = [...newRecipeSteps];
-                              updated[idx].title = e.target.value;
-                              setNewRecipeSteps(updated);
-                            }}
-                            style={{ flex: 2 }}
-                          />
-                          <input
-                            type="number"
-                            className="entry-form-input"
-                            placeholder="定时秒数 (可选)"
-                            value={step.duration}
-                            onChange={(e) => {
-                              const updated = [...newRecipeSteps];
-                              updated[idx].duration = e.target.value;
-                              setNewRecipeSteps(updated);
+                              setNewRecipeSteps((prev) =>
+                                prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s))
+                              );
                             }}
                             style={{ flex: 1 }}
                           />
@@ -1428,56 +1757,130 @@ function App() {
                             <button
                               type="button"
                               className="btn-row-action delete"
+                              aria-label="删除步骤"
                               onClick={() => setNewRecipeSteps(newRecipeSteps.filter((_, i) => i !== idx))}
                             >
                               <X size={14} />
                             </button>
                           )}
                         </div>
-                        {/* Quick Insert Pills */}
-                        {newRecipeIngredients.filter(ing => ing.name.trim() !== '').length > 0 && (
-                          <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '4px 0 6px 0' }}>
-                            <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
-                            {newRecipeIngredients
-                              .filter(ing => ing.name.trim() !== '')
-                              .map((ing, i) => {
-                                const tagType = ing.type || 'basic';
-                                const labelColor = tagType === 'basic' ? '#d03e2d' : tagType === 'seasoning' ? '#00875a' : '#6554c0';
-                                const bgColor = tagType === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tagType === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
-                                const typeLabel = tagType === 'basic' ? '主' : tagType === 'seasoning' ? '辅' : '香';
+                        {/* Quick Insert Pills (includes primary & alternative materials) */}
+                        {(() => {
+                          const insertTokens = [];
+                          newRecipeIngredients.forEach((ing) => {
+                            const tagType = ing.type || 'basic';
+                            if (ing.name.trim() !== '') {
+                              insertTokens.push({ name: ing.name.trim(), type: tagType, isAlt: false });
+                            }
+                            (ing.alternatives || []).forEach((alt) => {
+                              if (alt.name.trim() !== '') {
+                                insertTokens.push({
+                                  name: alt.name.trim(),
+                                  type: alt.type || tagType,
+                                  isAlt: true,
+                                });
+                              }
+                            });
+                          });
+                          if (insertTokens.length === 0) return null;
+                          return (
+                            <div className="quick-insert-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', margin: '2px 0 4px 0' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)', fontWeight: '500' }}>点击快速插入材料标记:</span>
+                              {insertTokens.map((tok, i) => {
+                                const labelColor = tok.type === 'basic' ? '#d03e2d' : tok.type === 'seasoning' ? '#00875a' : '#6554c0';
+                                const bgColor = tok.type === 'basic' ? 'rgba(224, 62, 45, 0.06)' : tok.type === 'seasoning' ? 'rgba(0, 135, 90, 0.06)' : 'rgba(101, 84, 192, 0.06)';
+                                const typeLabel = tok.type === 'basic' ? '主' : tok.type === 'seasoning' ? '辅' : '香';
                                 return (
                                   <button
-                                    key={i}
+                                    key={`${tok.name}-${i}`}
                                     type="button"
-                                    onClick={() => insertTagIntoStep(idx, ing.name.trim(), tagType)}
+                                    onClick={() => insertTagIntoStep(idx, tok.name, tok.type)}
                                     className="category-chip"
-                                    style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
+                                    style={{ padding: '2px 8px', fontSize: '11px', height: 'auto', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', backgroundColor: bgColor, color: 'var(--ds-text)' }}
                                   >
-                                    <span style={{ fontWeight: '700', color: labelColor }}>{typeLabel}</span>
-                                    <span>{ing.name}</span>
+                                    <span style={{ fontWeight: '700', color: labelColor }}>
+                                      {tok.isAlt ? `${typeLabel}·备` : typeLabel}
+                                    </span>
+                                    <span>{tok.name}</span>
                                   </button>
                                 );
                               })}
-                          </div>
-                        )}
+                            </div>
+                          );
+                        })()}
                         <textarea
                           id={`step-textarea-${idx}`}
                           className="entry-form-textarea"
                           placeholder="描述具体步骤，可用[材料名]来标记高亮（例如：放入[豆腐]翻炒）"
                           value={step.desc}
                           onChange={(e) => {
-                            const updated = [...newRecipeSteps];
-                            updated[idx].desc = e.target.value;
-                            setNewRecipeSteps(updated);
+                            setNewRecipeSteps((prev) =>
+                              prev.map((s, i) => (i === idx ? { ...s, desc: e.target.value } : s))
+                            );
                           }}
                           style={{ minHeight: '60px' }}
                         />
+
+                        {/* Optional Assistive Timer Blocks for this step */}
+                        {(step.timers || []).length > 0 && (
+                          <div className="ing-alt-editor-list">
+                            {step.timers.map((tm, tIdx) => (
+                              <div key={tIdx} className="dynamic-row ing-alt-editor-row">
+                                <span className="ing-alt-badge">计时</span>
+                                <input
+                                  type="text"
+                                  className="entry-form-input"
+                                  placeholder="计时项，如：豆腐焯水 / 小火慢炖"
+                                  value={tm.label}
+                                  onChange={(e) =>
+                                    updateRecipeStepTimer(idx, tIdx, 'label', e.target.value)
+                                  }
+                                  style={{ flex: 2 }}
+                                />
+                                <input
+                                  type="number"
+                                  min="1"
+                                  className="entry-form-input"
+                                  placeholder="秒数，如：60"
+                                  value={tm.duration}
+                                  onChange={(e) =>
+                                    updateRecipeStepTimer(idx, tIdx, 'duration', e.target.value)
+                                  }
+                                  style={{ flex: 1.05 }}
+                                />
+                                <button
+                                  type="button"
+                                  className="btn-row-action delete"
+                                  aria-label="删除计时版块"
+                                  onClick={() => removeRecipeStepTimer(idx, tIdx)}
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="ing-entry-toolbar">
+                          <span style={{ fontSize: '11px', color: 'var(--ds-text-subtle)' }}>
+                            {(step.timers || []).length > 0
+                              ? `已标注 ${step.timers.length} 个辅助计时版块`
+                              : '常规步骤无需计时'}
+                          </span>
+                          <button
+                            type="button"
+                            className="ing-alt-add-btn"
+                            onClick={() => addRecipeStepTimer(idx)}
+                          >
+                            <Clock size={12} strokeWidth={2.5} /> 添加计时版块
+                          </button>
+                        </div>
                       </div>
                     ))}
                     <button
                       type="button"
                       className="recipe-link-btn"
-                      onClick={() => setNewRecipeSteps([...newRecipeSteps, { title: '', desc: '', duration: '' }])}
+                      onClick={() => setNewRecipeSteps((prev) => [...prev, createEmptyStepEntry()])}
                       style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', alignSelf: 'flex-start', marginTop: '4px' }}
                     >
                       <Plus size={12} strokeWidth={3} /> 添加下一个步骤
@@ -1500,10 +1903,17 @@ function App() {
           if (e.target.classList.contains('recipe-modal')) handleCloseRecipe();
         }}>
           <div className="modal-content-container">
-            <div className="modal-handle-bar"></div>
-            <button className="modal-close-btn" onClick={handleCloseRecipe} aria-label="关闭">
-              <X size={16} strokeWidth={2.5} />
-            </button>
+            <div className="modal-header">
+              <h2 className="modal-header-title">{selectedRecipe.title}</h2>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={handleCloseRecipe}
+                aria-label="关闭"
+              >
+                <X size={20} strokeWidth={2.2} />
+              </button>
+            </div>
 
             <div className="modal-body">
               {/* Top Cover */}
@@ -1514,13 +1924,12 @@ function App() {
 
               {/* Meta Intro */}
               <div className="modal-intro">
-                <h2 className="modal-title">{selectedRecipe.title}</h2>
                 {selectedRecipe.englishTitle && (
-                  <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', marginTop: '-4px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', marginBottom: '2px' }}>
                     {selectedRecipe.englishTitle}
                   </div>
                 )}
-                <div className="card-meta" style={{ marginTop: 'var(--spacing-xs)' }}>
+                <div className="card-meta">
                   <div className="meta-item">
                     <Clock size={14} strokeWidth={2.5} />
                     <span>准备 {selectedRecipe.prepTime} 分钟</span>
@@ -1530,7 +1939,7 @@ function App() {
                     <span>烹饪 {selectedRecipe.cookTime} 分钟</span>
                   </div>
                 </div>
-                <p style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', lineHeight: '1.6', marginTop: 'var(--spacing-sm)' }}>
+                <p style={{ fontSize: '13px', color: 'var(--ds-text-subtle)', lineHeight: '1.6', marginTop: 'var(--spacing-xs)' }}>
                   {selectedRecipe.description}
                 </p>
               </div>
@@ -1548,73 +1957,187 @@ function App() {
                 <div className="tab-indicator" style={{ transform: `translateX(${activeTab * 100}%)` }}></div>
               </div>
 
-              {/* Tab 1 Panel (Ingredients) */}
+              {/* Tab 1 Panel (Ingredients: Required vs Optional Progress + Parallel Alternative Groups) */}
               <div className={`tab-panel ${activeTab === 0 ? 'active' : ''}`}>
-                <div className="ingredients-header">
-                  <h4 className="step-title">所需材料清单</h4>
-                  <span className="ingredients-count">
-                    已核对 {Object.values(ingredientChecked).filter(Boolean).length} / {selectedRecipe.ingredients.length}
-                  </span>
-                </div>
-                <div className="ingredient-list">
-                  {selectedRecipe.ingredients.map((ing, idx) => (
-                    <label 
-                      key={idx} 
-                      className={`ingredient-item ${ingredientChecked[idx] ? 'completed' : ''}`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        className="ingredient-checkbox"
-                        checked={!!ingredientChecked[idx]}
-                        onChange={(e) => {
-                          setIngredientChecked(prev => ({
-                            ...prev,
-                            [idx]: e.target.checked
-                          }));
-                        }}
-                      />
-                      <span className="custom-checkmark">
-                        <svg viewBox="0 0 12 12"><path d="M2 6l3 3 5-6" /></svg>
-                      </span>
-                      <span className="ingredient-name">
-                        {ing.type && (
-                          <span 
-                            className="lozenge" 
-                            style={{ 
-                              marginRight: '6px', 
-                              padding: '1px 4px', 
-                              fontSize: '10px',
-                              transform: 'scale(0.9)',
-                              backgroundColor: ing.type === 'basic' ? 'rgba(224, 62, 45, 0.08)' : ing.type === 'seasoning' ? 'rgba(0, 135, 90, 0.08)' : 'rgba(101, 84, 192, 0.08)',
-                              color: ing.type === 'basic' ? '#d03e2d' : ing.type === 'seasoning' ? '#00875a' : '#6554c0',
-                              border: ing.type === 'basic' ? '1px solid rgba(224, 62, 45, 0.2)' : ing.type === 'seasoning' ? '1px solid rgba(0, 135, 90, 0.2)' : '1px solid rgba(101, 84, 192, 0.2)'
-                            }}
-                          >
-                            {ing.type === 'basic' ? '主' : ing.type === 'seasoning' ? '辅' : '香'}
-                          </span>
-                        )}
-                        {ing.name}
-                      </span>
-                      <span className="ingredient-amount">{ing.amount}</span>
-                    </label>
-                  ))}
-                </div>
+                {(() => {
+                  const recipeIngredients = selectedRecipe.ingredients || [];
+                  const requiredEntries = recipeIngredients
+                    .map((ing, idx) => ({ ing, idx }))
+                    .filter(({ ing }) => !ing.optional);
+                  const optionalEntries = recipeIngredients
+                    .map((ing, idx) => ({ ing, idx }))
+                    .filter(({ ing }) => Boolean(ing.optional));
+
+                  const requiredDoneCount = requiredEntries.filter(({ ing, idx }) =>
+                    isIngredientGroupSatisfied(ing, idx, ingredientChecked)
+                  ).length;
+                  const optionalDoneCount = optionalEntries.filter(({ ing, idx }) =>
+                    isIngredientGroupSatisfied(ing, idx, ingredientChecked)
+                  ).length;
+                  const allRequiredDone =
+                    requiredEntries.length > 0 && requiredDoneCount === requiredEntries.length;
+
+                  return (
+                    <>
+                      <div className="ingredients-header">
+                        <h4 className="step-title">所需材料清单</h4>
+                        <div className="ingredients-count-group">
+                          {requiredEntries.length > 0 && (
+                            <span
+                              className={`ing-progress-pill required ${allRequiredDone ? 'all-done' : ''}`}
+                            >
+                              {allRequiredDone ? '✓ ' : ''}必选 {requiredDoneCount}/{requiredEntries.length}
+                            </span>
+                          )}
+                          {optionalEntries.length > 0 && (
+                            <span
+                              className={`ing-progress-pill optional ${optionalDoneCount > 0 ? 'has-checked' : ''}`}
+                            >
+                              可选 {optionalDoneCount}/{optionalEntries.length}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="ingredient-list">
+                        {recipeIngredients.map((ing, idx) => {
+                          const options = getIngredientGroupOptions(ing);
+                          const groupSatisfied = isIngredientGroupSatisfied(
+                            ing,
+                            idx,
+                            ingredientChecked
+                          );
+
+                          if (options.length === 1) {
+                            const checkKey = `${idx}-0`;
+                            const isChecked = Boolean(ingredientChecked[checkKey]);
+                            const optType = ing.type || 'basic';
+                            const typeLabel =
+                              optType === 'basic' ? '主' : optType === 'seasoning' ? '辅' : '香';
+
+                            return (
+                              <label
+                                key={idx}
+                                className={`ingredient-item ${isChecked ? 'completed' : ''} ${ing.optional ? 'is-optional' : ''}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="ingredient-checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setIngredientChecked((prev) => ({
+                                      ...prev,
+                                      [checkKey]: checked,
+                                    }));
+                                  }}
+                                />
+                                <span className="custom-checkmark">
+                                  <svg viewBox="0 0 12 12">
+                                    <path d="M2 6l3 3 5-6" />
+                                  </svg>
+                                </span>
+                                <span className="ingredient-name">
+                                  <span className={`ing-type-badge ${optType}`}>{typeLabel}</span>
+                                  <span className="ing-name-text">{ing.name}</span>
+                                  {ing.optional && <span className="ing-optional-badge">可选</span>}
+                                </span>
+                                <span className="ingredient-amount">{ing.amount}</span>
+                              </label>
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`ingredient-group ${groupSatisfied ? 'satisfied' : ''} ${ing.optional ? 'is-optional' : ''}`}
+                            >
+                              <div className="ingredient-group-header">
+                                <div className="ingredient-group-title">
+                                  <span className="ing-group-label">备选组 · 任选其一</span>
+                                  {ing.optional && <span className="ing-optional-badge">可选</span>}
+                                </div>
+                                <span
+                                  className={`ing-group-status ${groupSatisfied ? 'done' : ''}`}
+                                >
+                                  {groupSatisfied ? '✓ 已备齐' : `${options.length} 选 1`}
+                                </span>
+                              </div>
+
+                              <div className="ingredient-group-items">
+                                {options.map((opt, optIdx) => {
+                                  const checkKey = `${idx}-${optIdx}`;
+                                  const isChecked = Boolean(ingredientChecked[checkKey]);
+                                  const isSubstituted = groupSatisfied && !isChecked;
+                                  const optType = opt.type || ing.type || 'basic';
+                                  const typeLabel =
+                                    optType === 'basic'
+                                      ? '主'
+                                      : optType === 'seasoning'
+                                        ? '辅'
+                                        : '香';
+
+                                  return (
+                                    <label
+                                      key={checkKey}
+                                      className={`ingredient-item in-group ${isChecked ? 'completed' : ''} ${isSubstituted ? 'substituted' : ''}`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        className="ingredient-checkbox"
+                                        checked={isChecked}
+                                        onChange={(e) => {
+                                          const checked = e.target.checked;
+                                          setIngredientChecked((prev) => ({
+                                            ...prev,
+                                            [checkKey]: checked,
+                                          }));
+                                        }}
+                                      />
+                                      <span className="custom-checkmark">
+                                        <svg viewBox="0 0 12 12">
+                                          <path d="M2 6l3 3 5-6" />
+                                        </svg>
+                                      </span>
+                                      <span className="ingredient-name">
+                                        <span className={`ing-type-badge ${optType}`}>
+                                          {typeLabel}
+                                        </span>
+                                        {optIdx > 0 && (
+                                          <span className="ing-alt-badge">备选</span>
+                                        )}
+                                        <span className="ing-name-text">{opt.name}</span>
+                                      </span>
+                                      <span className="ingredient-amount">
+                                        {isSubstituted && (
+                                          <span className="ing-subbed-note">免备</span>
+                                        )}
+                                        {opt.amount}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
-              {/* Tab 2 Panel (Steps) */}
+              {/* Tab 2 Panel (Steps — only renders assistive timer blocks on annotated timed segments) */}
               <div className={`tab-panel ${activeTab === 1 ? 'active' : ''}`}>
                 <div className="steps-container">
                   {selectedRecipe.steps.map((step, idx) => {
                     const isActive = activeStepIndex === idx;
-                    const isCompleted = completedSteps.includes(idx);
-                    const hasTimer = step.duration > 0;
-                    const isCurrentStepTimerRunning = isTimerRunning && activeTimerStepIndex === idx;
-                    const secondsDisplay = activeTimerStepIndex === idx ? timerSecondsLeft : step.duration;
+                    const stepTimers = getStepTimers(step);
                     
                     return (
                       <div 
                         key={idx}
-                        className={`step-card ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                        className={`step-card ${isActive ? 'active' : ''}`}
                         onClick={() => setActiveStepIndex(idx)}
                       >
                         <div className="step-number-bubble">{idx + 1}</div>
@@ -1623,25 +2146,71 @@ function App() {
                           <div className="step-desc">
                             {renderStepText(step.desc)}
                           </div>
-                          {hasTimer && (
-                            <div className="step-timer-wrapper" onClick={(e) => e.stopPropagation()}>
-                              <span className="timer-digits">{formatTime(secondsDisplay)}</span>
-                              <div className="timer-controls">
-                                <button 
-                                  className="btn-timer btn-play-pause" 
-                                  title="开始/暂停"
-                                  onClick={() => startTimer(idx, step.duration)}
-                                >
-                                  {isCurrentStepTimerRunning ? <Pause size={14} /> : <Play size={14} />}
-                                </button>
-                                <button 
-                                  className="btn-timer btn-reset" 
-                                  title="重置"
-                                  onClick={() => resetTimer(idx, step.duration)}
-                                >
-                                  <RotateCcw size={14} />
-                                </button>
-                              </div>
+                          {stepTimers.length > 0 && (
+                            <div className="step-timer-list" onClick={(e) => e.stopPropagation()}>
+                              {stepTimers.map((tm, tIdx) => {
+                                const tKey = `${idx}-${tIdx}`;
+                                const isThisActive = activeTimerKey === tKey;
+                                const isThisRunning = isTimerRunning && isThisActive;
+                                const isThisDone = Boolean(completedTimerKeys[tKey]);
+                                const secondsDisplay = isThisActive
+                                  ? timerSecondsLeft
+                                  : isThisDone
+                                    ? 0
+                                    : tm.duration;
+                                const showReset =
+                                  isThisDone ||
+                                  (isThisActive && timerSecondsLeft !== tm.duration);
+
+                                return (
+                                  <div
+                                    key={tKey}
+                                    className={`step-timer-wrapper ${isThisRunning ? 'is-running' : ''} ${isThisDone ? 'is-done' : ''}`}
+                                  >
+                                    <div className="step-timer-meta">
+                                      <Clock size={14} strokeWidth={2.3} className="step-timer-icon" />
+                                      <span className="step-timer-label">
+                                        {tm.label || '辅助计时'}
+                                      </span>
+                                      {isThisRunning && (
+                                        <span className="step-timer-badge running">计时中</span>
+                                      )}
+                                      {isThisDone && !isThisRunning && (
+                                        <span className="step-timer-badge done">✓ 已到时</span>
+                                      )}
+                                    </div>
+                                    <div className="step-timer-right">
+                                      <span className="timer-digits">{formatTime(secondsDisplay)}</span>
+                                      <div className="timer-controls">
+                                        <button
+                                          type="button"
+                                          className="btn-timer btn-play-pause"
+                                          title={isThisRunning ? '暂停计时' : '开始辅助计时'}
+                                          aria-label={isThisRunning ? '暂停计时' : '开始辅助计时'}
+                                          onClick={() =>
+                                            toggleAssistTimer(idx, tIdx, tm, step.title)
+                                          }
+                                        >
+                                          {isThisRunning ? <Pause size={13} /> : <Play size={13} />}
+                                        </button>
+                                        {showReset && (
+                                          <button
+                                            type="button"
+                                            className="btn-timer btn-reset"
+                                            title="重置计时"
+                                            aria-label="重置计时"
+                                            onClick={() =>
+                                              resetAssistTimer(idx, tIdx, tm.duration)
+                                            }
+                                          >
+                                            <RotateCcw size={13} />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
@@ -1678,6 +2247,11 @@ function App() {
         </div>
       )}
 
+      {currentTab === 'components' && <ComponentInspectorPage />}
+
+      {/* Top-Anchored Mobile Notification Region for Assistive Timers */}
+      <MobileToastRegion toasts={appToasts} onDismiss={dismissAppToast} placement="top" />
+
       {/* Bottom Navigation Bar */}
       <nav className="bottom-nav">
         <button 
@@ -1693,6 +2267,13 @@ function App() {
         >
           <ClipboardList className="bottom-nav-icon" size={20} strokeWidth={2.5} />
           <span className="bottom-nav-label">常用食材</span>
+        </button>
+        <button 
+          className={`bottom-nav-item ${currentTab === 'components' ? 'active' : ''}`}
+          onClick={() => handleTabChange('components')}
+        >
+          <Layers className="bottom-nav-icon" size={20} strokeWidth={2.5} />
+          <span className="bottom-nav-label">组件检查</span>
         </button>
       </nav>
     </div>

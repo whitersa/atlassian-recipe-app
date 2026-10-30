@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate:data": "node scripts/migrate-backup.mjs"
   },
   "dependencies": {
     "idb-keyval": "^6.2.5",

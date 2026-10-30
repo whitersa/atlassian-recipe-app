@@ -1,11 +1,16 @@
 /**
  * Storage layer using IndexedDB (via idb-keyval) for persistent, large-capacity storage.
- * Includes automatic one-time migration from localStorage for existing users.
+ * Includes:
+ * 1. Automatic one-time migration from legacy localStorage to IndexedDB.
+ * 2. Automatic versioned schema migration (e.g. v1 -> v2 ingredient `optional` & `alternatives`)
+ *    tracked via `STORAGE_KEYS.SCHEMA_VERSION`.
  */
 import { get, set } from 'idb-keyval';
+import { DATA_VERSION, migrateData, normalizeRecipesList } from './migrations';
 
 // Storage keys
 export const STORAGE_KEYS = {
+  SCHEMA_VERSION: 'schema_version',
   THEME: 'theme',
   WORKPLACE_MODE: 'workplaceMode',
   HOME_INGREDIENTS: 'home_ingredients_v2',
@@ -45,33 +50,71 @@ const migrateFromLocalStorage = async () => {
   }
 
   await set(STORAGE_KEYS.MIGRATED_FLAG, true);
-  
+
   // Clean up localStorage after successful migration
-  lsKeys.forEach(key => localStorage.removeItem(key));
+  lsKeys.forEach((key) => localStorage.removeItem(key));
 };
 
 /**
- * Load all app data from IndexedDB in a single batch.
- * Returns an object with all stored values (or null if not found).
+ * Load all app data from IndexedDB in a single batch and run sequential schema migrations
+ * whenever stored `SCHEMA_VERSION` is older than `DATA_VERSION`.
  */
 export const loadAllData = async (defaults) => {
-  // Run migration first (no-op if already done)
+  // Run localStorage -> IndexedDB migration first (no-op if already done)
   await migrateFromLocalStorage();
 
-  const [theme, workplaceMode, homeIngredients, recipes, ingredientLibrary] = await Promise.all([
-    get(STORAGE_KEYS.THEME),
-    get(STORAGE_KEYS.WORKPLACE_MODE),
-    get(STORAGE_KEYS.HOME_INGREDIENTS),
-    get(STORAGE_KEYS.RECIPES),
-    get(STORAGE_KEYS.INGREDIENT_LIBRARY),
-  ]);
+  const [storedVersion, theme, workplaceMode, homeIngredients, recipes, ingredientLibrary] =
+    await Promise.all([
+      get(STORAGE_KEYS.SCHEMA_VERSION),
+      get(STORAGE_KEYS.THEME),
+      get(STORAGE_KEYS.WORKPLACE_MODE),
+      get(STORAGE_KEYS.HOME_INGREDIENTS),
+      get(STORAGE_KEYS.RECIPES),
+      get(STORAGE_KEYS.INGREDIENT_LIBRARY),
+    ]);
 
-  return {
+  const hasExistingData =
+    recipes !== undefined ||
+    ingredientLibrary !== undefined ||
+    homeIngredients !== undefined ||
+    theme !== undefined ||
+    workplaceMode !== undefined;
+
+  const snapshot = {
     theme: theme ?? defaults.theme,
     workplaceMode: workplaceMode ?? defaults.workplaceMode,
-    homeIngredients: homeIngredients ?? defaults.homeIngredients,
-    recipes: recipes ?? defaults.recipes,
-    ingredientLibrary: ingredientLibrary ?? defaults.ingredientLibrary,
+    homeIngredients: homeIngredients ?? defaults.homeIngredients ?? [],
+    recipes: recipes ?? defaults.recipes ?? [],
+    ingredientLibrary: ingredientLibrary ?? defaults.ingredientLibrary ?? [],
+  };
+
+  if (!hasExistingData) {
+    const normalizedRecipes = normalizeRecipesList(snapshot.recipes);
+    await set(STORAGE_KEYS.SCHEMA_VERSION, DATA_VERSION);
+    return {
+      ...snapshot,
+      recipes: normalizedRecipes,
+    };
+  }
+
+  const effectiveVersion =
+    typeof storedVersion === 'number' && storedVersion >= 1 ? Math.floor(storedVersion) : 1;
+
+  if (effectiveVersion < DATA_VERSION) {
+    const migrated = migrateData({
+      version: effectiveVersion,
+      data: snapshot,
+    });
+    await Promise.all([
+      set(STORAGE_KEYS.RECIPES, migrated.recipes),
+      set(STORAGE_KEYS.SCHEMA_VERSION, DATA_VERSION),
+    ]);
+    return migrated;
+  }
+
+  return {
+    ...snapshot,
+    recipes: normalizeRecipesList(snapshot.recipes),
   };
 };
 
@@ -79,10 +122,16 @@ export const loadAllData = async (defaults) => {
  * Save individual values to IndexedDB.
  * Each function is a fire-and-forget write.
  */
+export const saveSchemaVersion = (version = DATA_VERSION) =>
+  set(STORAGE_KEYS.SCHEMA_VERSION, version);
 export const saveTheme = (value) => set(STORAGE_KEYS.THEME, value);
 export const saveWorkplaceMode = (value) => set(STORAGE_KEYS.WORKPLACE_MODE, value);
 export const saveHomeIngredients = (value) => set(STORAGE_KEYS.HOME_INGREDIENTS, value);
-export const saveRecipes = (value) => set(STORAGE_KEYS.RECIPES, value);
+export const saveRecipes = (value) =>
+  Promise.all([
+    set(STORAGE_KEYS.RECIPES, normalizeRecipesList(value)),
+    set(STORAGE_KEYS.SCHEMA_VERSION, DATA_VERSION),
+  ]);
 export const saveIngredientLibrary = (value) => set(STORAGE_KEYS.INGREDIENT_LIBRARY, value);
 
 /**
@@ -90,10 +139,11 @@ export const saveIngredientLibrary = (value) => set(STORAGE_KEYS.INGREDIENT_LIBR
  */
 export const saveAllData = async (data) => {
   await Promise.all([
+    saveSchemaVersion(DATA_VERSION),
     saveTheme(data.theme),
     saveWorkplaceMode(data.workplaceMode),
-    saveHomeIngredients(data.homeIngredients),
-    saveRecipes(data.recipes),
-    saveIngredientLibrary(data.ingredientLibrary),
+    saveHomeIngredients(data.homeIngredients ?? []),
+    set(STORAGE_KEYS.RECIPES, normalizeRecipesList(data.recipes ?? [])),
+    saveIngredientLibrary(data.ingredientLibrary ?? []),
   ]);
 };
