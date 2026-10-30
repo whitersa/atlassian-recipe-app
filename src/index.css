@@ -264,11 +264,16 @@ header {
 
 .recipe-card[data-pressed="true"] > .recipe-card-shell,
 .recipe-card:active:not([aria-disabled="true"]) > .recipe-card-shell {
-  background-color: var(
-    --m-surface-pressed,
-    color-mix(in srgb, var(--ds-background-default), var(--ds-text) 16%)
-  );
+  background-color: var(--ds-background-default);
+  border-color: var(--ds-border-brand);
   transition: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recipe-card:hover .recipe-card-shell {
+    box-shadow: var(--shadow-hover);
+    border-color: var(--ds-border-brand);
+  }
 }
 
 .card-image-wrapper {
@@ -762,9 +767,9 @@ header {
   border-style: dashed;
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .ingredient-item:hover {
-    background-color: var(--ds-background-app);
+    border-color: var(--ds-border-brand);
   }
 }
 
@@ -845,9 +850,9 @@ header {
   border-top: 1px dashed var(--ds-border);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .ingredient-item.in-group:hover {
-    background-color: var(--ds-background-app);
+    border-color: var(--ds-border-brand);
   }
 }
 
@@ -868,10 +873,10 @@ header {
   background-color: var(--ds-background-neutral);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   [data-theme="dark"] .ingredient-item:hover,
   [data-theme="dark"] .ingredient-item.in-group:hover {
-    background-color: var(--ds-background-neutral-hover);
+    border-color: var(--ds-border-brand);
   }
 }
 

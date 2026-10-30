@@ -115,7 +115,7 @@
   --ds-background-app:           var(--neutral-app);
   --ds-background-default:       var(--neutral-surface);
   --ds-background-surface:       var(--neutral-surface);
-  --ds-background-input:         var(--neutral-app);
+  --ds-background-input:         var(--neutral-surface);
   --ds-background-neutral:       var(--neutral-subtle);
   --ds-background-neutral-hover: hsl(215, 15%, 89%);
   --ds-background-brand:         var(--brand-base);

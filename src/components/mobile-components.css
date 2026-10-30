@@ -32,8 +32,8 @@
 
   /* Surface Interaction Ratios */
   --m-press-scale: 0.97;
-  --m-hover-strength: 8%;
-  --m-press-strength: 16%;
+  --m-hover-strength: 4%;
+  --m-press-strength: 6%;
   /* 13px Regular (MobileStatusBadge) 光学微上提 -0.5px；14px Bold/600 (MobileButton) 因 Inter 基线 + 雅黑粗体上伸量达 12px，需独立下移 +0.35px 居中 */
   --m-label-optical-offset: -0.5px;
   --m-btn-optical-offset: 0.35px;
